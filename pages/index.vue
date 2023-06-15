@@ -123,8 +123,13 @@
        <v-card-title>
         List barang
         <v-spacer></v-spacer>
-        <v-btn small rounded color="success" @click="AddProduct()">
+        <v-btn small rounded color="success" class="mr-3" @click="AddProduct()">
           <v-icon>mdi-plus</v-icon>
+          item
+        </v-btn>
+        <v-btn small rounded color="secondary" @click="isAddingOngkir = true">
+          <v-icon>mdi-plus</v-icon>
+          ongkir
         </v-btn>
       </v-card-title>
        
@@ -140,19 +145,29 @@
                 NO
               </th>
               <th class="text-left">
-                JENIS BARANG
+                JENIS BARANG<br>
+                <v-icon @click="CopyValue('jenis_barang')" small>mdi-list-box-outline</v-icon>
+                 persis
               </th>
               <th class="text-left">
-                CODE COIL
+                CODE COIL<br>
+                <v-icon @click="CopyValue('code_coil')" small>mdi-list-box-outline</v-icon>
+                 persis
               </th>
               <th class="text-left">
-                QTY (Kg)
+                QTY (Kg)<br>
+                <v-icon @click="CopyValue('qty')" small>mdi-list-box-outline</v-icon>
+                 persis
               </th>
               <th class="text-left">
-                TOTAL (Mtr)
+                TOTAL (Mtr)<br>
+                <v-icon @click="CopyValue('total_mtr')" small>mdi-list-box-outline</v-icon>
+                 persis
               </th>
               <th class="text-left">
-                HARGA
+                HARGA<br>
+                <v-icon @click="CopyValue('harga')" small>mdi-list-box-outline</v-icon>
+                 persis
               </th>
               <th class="text-left">
                 TOTAL
@@ -161,10 +176,10 @@
           </thead>
           <tbody>
             <tr
-              v-for="item in products"              
+              v-for="(item, index) in products" :key = "index"      
             >
-              <td>
-                 <input style="width: 20px;" type="text" v-model="item.no"/>                    
+              <td class style="min-width: 70px;">
+                <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>                
               </td>              
               <td>
                  <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
@@ -173,21 +188,39 @@
                  <input style="width: 100px;" type="text" v-model="item.code_coil"/>                    
               </td>              
               <td>
-                 <input style="width: 70px;" type="text" v-model="item.qty"/>                    
+                 <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
               </td>              
               <td>
                  <input style="width: 70px;" type="text" v-model="item.total_mtr"/>                    
               </td>              
               <td>
-                 <input style="width: 70px;" type="text" v-model="item.harga"/>                    
+                 <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
               </td>              
               <td>
-                 <input style="width: 100px;" type="text" v-model="item.total"/>                    
-              </td>              
+                 <!-- <input style="width: 100px;" type="text" v-model="item.total"/>                     -->
+                  {{ item.total_rp }}
+                </td>              
             </tr>
           </tbody>
         </template>
       </v-simple-table>
+      <v-card-actions class="ml-5 mt-5 pb-0">
+         <h4>total contract : <span style="color:red">{{ grand_total_rp }}</span> </h4>
+        </v-card-actions>
+      <v-card-actions class="ml-5 pt-0">
+        <h5 class="mb-5">total qty : <span>{{ grand_total_qty }} kg</span> </h5>
+      </v-card-actions>
+      <v-overlay
+          :absolute="true"
+          :value="isAddingOngkir"
+        >
+          <v-btn
+            color="success"
+            @click="isAddingOngkir = false"
+          >
+            Hide Overlay
+          </v-btn>
+        </v-overlay>
     </v-card>
   </v-container>   
 </template>
@@ -197,35 +230,121 @@ export default {
   name: 'IndexPage',
   data(){
     return {
+       isAddingOngkir : false,
        isAdding : true,
        date:'2023-06-13',
        modal: false,
        products: [
           {
-            no : '1',
             jenis_barang: '',
             code_coil: '',
-            qty:'',
+            qty: 1,
             total_mtr:'',
-            harga:'',
-            total:'',
+            harga_rp: '',
+            harga: '',
+            total_rp: '',
+            total: '',
           },          
         ],
+      grand_total : 0,
+      grand_total_rp : '',
+      grand_total_qty : 0,
+      ongkir:0
     } 
+  },
+  computed: {
+     sum_total(){
+        this.grand_total = 0
+        if(this.products.length > 0){
+          this.products.forEach(item => {
+            this.grand_total = Number(this.grand_total) + Number(item.total);
+          })
+        }
+        this.grand_total_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.grand_total)
+        return this.grand_total
+     },
+     sum_qty(){
+        this.grand_total_qty = 0
+        if(this.products.length > 0){
+          this.products.forEach(item => {
+            this.grand_total_qty = Number(this.grand_total_qty) + Number(item.qty);
+          })
+        }
+        return this.grand_total_qty
+     }
+  },
+  watch :{
+
   },
   methods: {
       AddProduct(){
          this.products.push(
             {
-              no : '2',
               jenis_barang: '',
               code_coil: '',
-              qty:'',
+              qty: 1,
               total_mtr:'',
+              harga_rp: '',
               harga:'',
-              total:'',
+              total_rp: '',
+              total: '',
             }, 
          )
+      },
+      RmProduct(index){
+        // 
+        this.products.splice(index,1);
+      },
+      CopyValue(column){
+
+        if (column == 'jenis_barang'){
+          this.products.forEach(item => {
+            item.jenis_barang = this.products[0].jenis_barang; 
+          })
+        }
+        if (column == 'code_coil'){
+          this.products.forEach(item => {
+            item.code_coil = this.products[0].code_coil; 
+          })
+        }
+        if (column == 'qty'){
+          this.products.forEach((item,index) => {
+            item.qty = this.products[0].qty; 
+            this.HitungTotal(index)
+          })
+        }
+        if (column == 'total_mtr'){
+          this.products.forEach((item) => {
+            item.total_mtr = this.products[0].total_mtr; 
+          })
+        }
+        if (column == 'harga'){
+          this.products.forEach((item,index) => {
+            item.harga = this.products[0].harga; 
+            item.harga_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.products[0].harga);
+            this.HitungTotal(index)
+          })
+        }
+      },
+      ConvertRp(index){
+        this.products[index].harga = this.products[index].harga_rp;
+        this.products[index].harga_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.products[index].harga_rp);
+        this.HitungTotal(index);
+      },
+      HitungTotal(index){
+        const rupiah = this.products[index].total = this.products[index].qty * this.products[index].harga;
+        this.products[index].total_rp =  Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(rupiah);
+      },
+      ClearValue(column, index){
+        if(column == 'harga'){
+          this.products[index].harga_rp = '';
+          this.products[index].total_rp = '';
+          this.products[index].total = '';
+        }
+        if(column == 'total'){
+          this.products[index].total_rp = '';
+          this.products[index].total = '';
+        }
       }
   }
 }
