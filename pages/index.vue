@@ -2,13 +2,13 @@
   <v-container>
     <v-card class="logo" color="primary">
         <v-card-title class="pt-5 pt-md-0 pb-md-0">
-            <h3 style="color:white" class="mr-5"> 
+            <span style="color:white" class="mr-5"> 
               sales contract
-            </h3>
+            </span>
             <v-text-field
               class="mt-3"
               dark
-              value="SC/APS/XXX/bulan/tahun"
+              v-model="sales_contract_no"
             >
                 
             </v-text-field>          
@@ -44,6 +44,7 @@
               filled
               v-if ="isAdding == true"
               dense
+              v-model="customer.nama"
             >
               <template v-slot:append-outer>
                 <v-slide-x-reverse-transition
@@ -59,20 +60,32 @@
               </template>      
             </v-text-field>       
           </v-col>
-          <v-col class="py-0" cols="12" md="6">            
+          <v-col class="py-0" cols="12" md="4">            
             <v-text-field
               label="npwp"              
               filled              
               dense
+              v-model = "customer.npwp"
             >              
             </v-text-field>                   
           </v-col>
-          <v-col class="py-0" cols="12" md="6">            
+          <v-col class="py-0" cols="12" md="4">            
             <v-text-field
               label="alamat"              
               filled    
               small         
+              dense
+              v-model = "customer.alamat" 
+            >              
+            </v-text-field>                   
+          </v-col>
+          <v-col class="py-0" cols="12" md="4">            
+            <v-text-field
+              label="alamat pengiriman"              
+              filled    
+              small         
               dense 
+              v-model = "customer.alamat_pengiriman"
             >              
             </v-text-field>                   
           </v-col>
@@ -121,15 +134,15 @@
     </v-dialog>
     <v-card color="primary" dark>
        <v-card-title>
-        List barang
+        <span>List barang</span>
         <v-spacer></v-spacer>
         <v-btn small rounded color="success" class="mr-3" @click="AddProduct()">
-          <v-icon>mdi-plus</v-icon>
-          item
+          <v-icon small>mdi-plus</v-icon>
+          <span v-if="$vuetify.breakpoint.name == 'md'">item</span>
         </v-btn>
         <v-btn small rounded color="secondary" @click="isAddingOngkir = true">
-          <v-icon>mdi-plus</v-icon>
-          ongkir
+          <v-icon small>mdi-truck-flatbed</v-icon>
+          <span v-if="$vuetify.breakpoint.name == 'md'"> ongkir</span>
         </v-btn>
       </v-card-title>
        
@@ -204,24 +217,56 @@
           </tbody>
         </template>
       </v-simple-table>
+      <v-divider></v-divider>
       <v-card-actions class="ml-5 mt-5 pb-0">
-         <h4>total contract : <span style="color:red">{{ grand_total_rp }}</span> </h4>
+         <h4>total contract : <span style="color:red">{{ sum_total }}</span> </h4>
         </v-card-actions>
+      <v-card-actions class="ml-5 pt-0 pb-0">
+        <h5 class="">ongkos kirim : <span>{{ ongkir | rupiah}}</span> </h5>
+      </v-card-actions>
       <v-card-actions class="ml-5 pt-0">
-        <h5 class="mb-5">total qty : <span>{{ grand_total_qty }} kg</span> </h5>
+        <h5 class="mb-5">total qty : <span>{{ sum_qty }} kg</span> </h5>
       </v-card-actions>
       <v-overlay
-          :absolute="true"
+          :absolute="false"
           :value="isAddingOngkir"
         >
-          <v-btn
-            color="success"
-            @click="isAddingOngkir = false"
-          >
-            Hide Overlay
-          </v-btn>
-        </v-overlay>
+        <v-card 
+          
+          light
+        >
+          <v-card-title>ongkos kirim: </v-card-title>
+          <v-divider></v-divider>
+            <v-text-field
+            dense
+            class="ma-5"
+            label="ongkir"
+            filled
+            rounded
+            v-model="ongkir"
+            >
+            </v-text-field>
+          <v-divider></v-divider>
+          <v-card-actions class="d-flex justify-end">            
+            <v-btn
+              small
+              class=""
+              color="success"
+              @click="isAddingOngkir = false"
+            >
+              simpan
+            </v-btn>
+          </v-card-actions>          
+        </v-card>
+      </v-overlay>
     </v-card>
+    <div class="d-flex justify-end">
+      <v-btn class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
+      <v-btn disabled class="error mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan (soon)</v-btn>
+    </div>
+    <div class="d-none" id="cetak">
+      <CetakPdf :form_sc_prop = "form_sc" />
+    </div>
   </v-container>   
 </template>
 
@@ -232,8 +277,15 @@ export default {
     return {
        isAddingOngkir : false,
        isAdding : true,
+       sales_contract_no : 'SC/APS/XXX/bulan/tahun',
        date:'2023-06-13',
        modal: false,
+       customer : {
+            nama :'',
+            npwp :'',
+            alamat:'',
+            alamat_pengiriman:'',
+       },
        products: [
           {
             jenis_barang: '',
@@ -247,12 +299,24 @@ export default {
           },          
         ],
       grand_total : 0,
-      grand_total_rp : '',
+      grand_total_rp : '0',
       grand_total_qty : 0,
       ongkir:0
     } 
   },
   computed: {
+     form_sc(){
+        const form = {
+           date : this.date,
+           customer : this.customer,
+           products : this.products,
+           grand_total_rp : this.grand_total_rp,
+           grand_total_qty : this.grand_total_qty,
+           ongkir : this.ongkir,
+           sales_contract_no : this.sales_contract_no,
+        }
+        return form;
+     },
      sum_total(){
         this.grand_total = 0
         if(this.products.length > 0){
@@ -260,8 +324,9 @@ export default {
             this.grand_total = Number(this.grand_total) + Number(item.total);
           })
         }
+        this.grand_total = Number(this.grand_total) + Number(this.ongkir);
         this.grand_total_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.grand_total)
-        return this.grand_total
+        return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.grand_total)
      },
      sum_qty(){
         this.grand_total_qty = 0
@@ -270,11 +335,16 @@ export default {
             this.grand_total_qty = Number(this.grand_total_qty) + Number(item.qty);
           })
         }
-        return this.grand_total_qty
+         return this.grand_total_qty
      }
   },
   watch :{
 
+  },
+  filters : {
+    rupiah(value){
+      return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+    }
   },
   methods: {
       AddProduct(){
