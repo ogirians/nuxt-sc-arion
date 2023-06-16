@@ -149,7 +149,7 @@
     </v-card>
     <v-card class="logo">
       <v-simple-table        
-        
+        id = "table-products"
       >
         <template v-slot:default>
           <thead>
@@ -261,24 +261,34 @@
       </v-overlay>
     </v-card>
     <div class="d-flex justify-end">
-      <v-btn class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
+      <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
       <v-btn disabled class="error mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan (soon)</v-btn>
     </div>
-    <div class="d-none" id="cetak">
+    <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
     </div>
   </v-container>   
 </template>
 
 <script>
+// import html2pdf from "html2pdf.js";
+
 export default {
   name: 'IndexPage',
+  mounted() {
+    this.html2pdf = require('html2pdf.js');
+  // use html2pdf here
+  },
+  created(){
+    this.date = this.$moment().format('YYYY-MM-DD');;
+  },
   data(){
     return {
+       html2pdf : '',
        isAddingOngkir : false,
        isAdding : true,
        sales_contract_no : 'SC/APS/XXX/bulan/tahun',
-       date:'2023-06-13',
+       date: '',
        modal: false,
        customer : {
             nama :'',
@@ -347,6 +357,22 @@ export default {
     }
   },
   methods: {
+      async exportToPDF() {
+        const options = {
+          margin: [5, 5, 5, 5], // Set the margins of the PDF
+          filename: 'my-document.pdf', // Set the name of the PDF file
+          image: { type: 'jpeg', quality: 2 }, // Set the image quality of the PDF
+          html2canvas: { scale: 4 }, // Set the scale of the PDF
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Set the format and orientation of the PDF
+        };
+
+        const element = document.getElementById("cetak2");
+        
+        console.log('Running on a web');
+        this.html2pdf().set(options).from(element).save();
+        // do something for any other platform
+
+      },
       AddProduct(){
          this.products.push(
             {
@@ -419,3 +445,14 @@ export default {
   }
 }
 </script>
+
+<style>
+  #table-products table   {
+    border-collapse: collapse;
+  }
+
+   #table-products table td, #table-products table  th {
+    border: 1px solid black;
+    padding: 8px;
+  }
+</style>

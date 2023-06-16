@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="halaman_cetak">
         <div style="text-align: center; margin: auto; width: 75%;">
             <b>CV. ARION PANCA SEKAWAN</b><br>
             <b>
@@ -20,58 +20,73 @@
                <b>SALES CONTRACT</b>
         </div>
         <div style="text-align: center; margin: auto; width: 75%;">
-               SC/APS/0002/06/2023                          
+               {{ form.sales_contract_no}}<br><br>
         </div>
-        <v-row class="mt-5">
-            <v-col cols="6" >
-                TANGGAL : 
-            </v-col>
-            <v-col cols="6">
-                ALAMAT PENGAMBILAN :
-            </v-col>
-            <v-col cols="12" class="pt-0">
-                CUSTOMER :
-            </v-col>
-            <v-col cols="12" class="pt-0">
-                NPWP :
-            </v-col>
-            <v-col cols="12" class="pt-0">
-                ALAMAT :
-            </v-col>
-        </v-row>
-        <div class="d-flex justify-center mt-8 mb-8">
-            <table>
+        <div style="margin-top: 10px;">
+                TANGGAL : {{ form.date }}<br>
+                ALAMAT PENGAMBILAN : {{ form.customer.alamat_pengiriman }}<br>
+                CUSTOMER : {{ form.customer.nama }}<br>
+                NPWP : {{ form.customer.npwp }}<br>
+                ALAMAT : {{ form.customer.alamat }}<br><br><br>
+        </div>
+        <div class="d-flex justify-center">
+            <table id="cetak">
                 <thead>
                 <tr>
-                  <th class="text-left">
-                    NO
-                  </th>
-                  <th class="text-left">
-                    JENIS BARANG<br>                
-                  </th>
-                  <th class="text-left">
-                    CODE COIL<br>               
-                  </th>
-                  <th class="text-left">
-                    QTY (Kg)<br>                
-                  </th>
-                  <th class="text-left">
-                    TOTAL (Mtr)<br>                
-                  </th>
-                  <th class="text-left">
-                    HARGA<br>                
-                  </th>
-                  <th class="text-left">
-                    TOTAL
-                  </th>
+                    <th>
+                    <b>NO</b>
+                    </th>
+                    <th>
+                    <b>JENIS BARANG</b>
+                    </th>
+                    <th>
+                    <b>CODE COIL</b>
+                    </th>
+                    <th>
+                    <b>QTY (Kg)</b>
+                    </th>
+                    <th>
+                    <b>TOTAL (Mtr)</b>
+                    </th>
+                    <th>
+                    <b>HARGA</b>
+                    </th>
+                    <th>
+                    <b>TOTAL</b>
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
-
+                    <tr
+                        v-for="(item, index) in form.products" :key = "index"      
+                        >
+                        <td>
+                            <span style="display: inline;">{{ index + 1 }}</span>                
+                        </td>              
+                        <td>
+                            {{ item.jenis_barang }}
+                        </td>              
+                        <td>
+                            {{ item.code_coil }}
+                        </td>              
+                        <td>
+                            {{ item.qty }}
+                        </td>              
+                        <td>
+                            {{ item.total_mtr }}
+                        </td>              
+                        <td>
+                            {{ item.harga }}
+                        </td>              
+                        <td>
+                            {{ item.total_rp }}
+                        </td>              
+                    </tr>
                 </tbody>
             </table>
         </div>
-        
+        <br>
+        <br>
         <v-row>
             <v-col cols="12">
                 CONTRACT CONDITION :
@@ -159,13 +174,37 @@
     </div>
 </template>
 
+<script>
+export default{
+    props: {
+        form_sc_prop : ''
+    },
+    data() {
+        return {
+            form : this.form_sc_prop
+        }
+    }
+}
+</script>
+
 <style>
-  table {
-    border-collapse: collapse;
+  #halaman_cetak {
+    font-size: 14px;
   }
 
-  td, th {
-    border: 2px solid black;
-    padding: 8px;
+  table#cetak   {
+    border-collapse: collapse;
+    margin: auto;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  table#cetak td ,  table#cetak th {
+    border: 1px solid black;
+    padding: 2px;
+    /* width: 50%; */
+    word-wrap: break-word;
+    /* white-space: pre-wrap; */
+    /* font-weight: bold; */
   }
 </style>

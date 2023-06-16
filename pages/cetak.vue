@@ -40,7 +40,7 @@
             </v-col>
         </v-row>
         <div class="d-flex justify-center mt-8 mb-8">
-            <table>
+            <table id="table-cetak">
                 <thead>
                 <tr>
                   <th class="text-left">
