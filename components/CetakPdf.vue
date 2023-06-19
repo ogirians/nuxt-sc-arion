@@ -23,35 +23,63 @@
                {{ form.sales_contract_no}}<br><br>
         </div>
         <div style="margin-top: 10px;">
-                TANGGAL : {{ form.date }}<br>
+            <table>
+                <tr>
+                    <td style="margin-right : 10px">TANGGAL</td>
+                    <td>&nbsp;&nbsp;:&nbsp;</td>
+                    <td>{{ form.date }}</td>
+                </tr>
+                <tr>
+                    <td style="margin-right : 10px">ALAMAT PENGAMBILAN</td>
+                    <td>&nbsp;&nbsp;:&nbsp;</td>
+                    <td>{{ form.customer.alamat_pengiriman }}</td>
+                </tr>
+                <tr>
+                    <td style="margin-right : 10px"> CUSTOMER</td>
+                    <td>&nbsp;&nbsp;:&nbsp;</td>
+                    <td>{{ form.customer.nama }}</td>
+                </tr>
+                <tr>
+                    <td style="margin-right : 10px">NPWP</td>
+                    <td>&nbsp;&nbsp;:&nbsp;</td>
+                    <td>{{ form.customer.npwp }}</td>
+                </tr>
+                <tr>
+                    <td style="margin-right : 10px">ALAMAT</td>
+                    <td>&nbsp;&nbsp;:&nbsp;</td>
+                    <td>{{ form.customer.alamat }}</td>
+                </tr>
+            </table>
+                <!-- TANGGAL : {{ form.date }}<br>
                 ALAMAT PENGAMBILAN : {{ form.customer.alamat_pengiriman }}<br>
                 CUSTOMER : {{ form.customer.nama }}<br>
                 NPWP : {{ form.customer.npwp }}<br>
-                ALAMAT : {{ form.customer.alamat }}<br><br><br>
+                ALAMAT : {{ form.customer.alamat }} -->
+                <br><br><br>
         </div>
         <div class="d-flex justify-center">
             <table id="cetak">
                 <thead>
                 <tr>
-                    <th>
+                    <th style="max-width: 20px;">
                     <b>NO</b>
                     </th>
-                    <th>
+                    <th style="max-width: 250px;">
                     <b>JENIS BARANG</b>
                     </th>
-                    <th>
+                    <th style="max-width: 100px;">
                     <b>CODE COIL</b>
                     </th>
-                    <th>
+                    <th style="max-width: 100px;">
                     <b>QTY (Kg)</b>
                     </th>
-                    <th>
+                    <th style="max-width: 100px;">
                     <b>TOTAL (Mtr)</b>
                     </th>
-                    <th>
+                    <th style="max-width: 100px;">
                     <b>HARGA</b>
                     </th>
-                    <th>
+                    <th style="max-width: 150px;">
                     <b>TOTAL</b>
                     </th>
                 </tr>
@@ -60,117 +88,110 @@
                     <tr
                         v-for="(item, index) in form.products" :key = "index"      
                         >
-                        <td>
+                        <td style="max-width: 20px;">
                             <span style="display: inline;">{{ index + 1 }}</span>                
                         </td>              
-                        <td>
+                        <td style="max-width: 250px;">
                             {{ item.jenis_barang }}
                         </td>              
-                        <td>
+                        <td style="max-width: 100px;">
                             {{ item.code_coil }}
                         </td>              
-                        <td>
+                        <td style="max-width: 100px;">
                             {{ item.qty }}
                         </td>              
-                        <td>
+                        <td style="max-width: 100px;">
                             {{ item.total_mtr }}
                         </td>              
-                        <td>
-                            {{ item.harga }}
+                        <td style="max-width: 100px;">
+                            {{ item.harga_rp }}
                         </td>              
-                        <td>
+                        <td style="max-width: 150px;">
                             {{ item.total_rp }}
                         </td>              
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="4" style="text-align: center">ONGKIR</td>
+                        <td>{{ form.ongkir | rupiah }}</td>
+                        <td>{{ form.ongkir | rupiah }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="text-align: center"><b>TOTAL</b></td>
+                        <td>{{ form.grand_total_qty }}</td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ form.grand_total_rp }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <br>
         <br>
-        <v-row>
-            <v-col cols="12">
-                CONTRACT CONDITION :
-            </v-col>
-            <v-col cols="1" class = "pb-0">
-                I 
-            </v-col>
-            <v-col cols="11" class = "pb-0">
-                Payment term
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                 
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">
-                <b>CBD (CASH BEFORE DELIVERY)</b>
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                 
-                II
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                Harga LOCO gudang
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                 
-                III
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">
-                Pembayaran
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                <b>Pembayaran DIANGGAP SAH JIKA DANA SUDAH MASUK KE REKENING</b>
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                <b>BANK BCA </b>
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                <b>AC : 0877170822</b>
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                <b>AN : ARION PANCA SEKAWAN .CV</b>
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-                IV
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                Waktu pengambilan barang
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-                
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                Realisasi pengambilan barang mohon info H-1 sebelum tanggal pengambilan
-             </v-col>
-             <v-col cols="1" class="pt-0 pb-0">                                 
-                V
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                Jika Sales Contract disetujui, mohon ditandatangani dan dikirim kembali
-            </v-col>
-            <v-col cols="1" class="pt-0 pb-0">                                 
-                Note
-            </v-col>
-            <v-col cols="11" class="pt-0 pb-0">                 
-                Harap SC ini diperiksa terlebih dahulu, bila terjadi kesalahan dalam pemesanan & SC udah di ACC pihak customer maka pihak CV.ARION PANCA SEKWAN tidak bertanggung jawab.
-            </v-col>
-            <v-col cols="6" class="mt-8 d-flex justify-center"> 
-                hormat saya                                 
-            </v-col>
-            <v-col cols="6" class="mt-8 d-flex justify-center">                 
-                Disetujui oleh
-            </v-col>
-            <v-col cols="6" class="mt-12 d-flex justify-center"> 
-                CV. ARION PANCA SEKAWAN                                 
-            </v-col>
-            <v-col cols="6" class="mt-12 d-flex justify-center">                 
-                Customer
-            </v-col>
-        </v-row>
+        <table id="condition">
+            <tr>
+                <td colspan="2">CONTRACT CONDITION :</td>
+            </tr>
+            <tr>
+                <td>I</td>
+                <td>Payment term</td>
+            </tr> 
+            <tr>
+                <td></td>
+                <td><b>CBD (CASH BEFORE DELIVERY)</b></td>
+            </tr> 
+            <tr>
+                <td>II</td>
+                <td>Harga LOCO gudang</td>
+            </tr>   
+            <tr>
+                <td>III</td>
+                <td>Pembayaran</td>
+            </tr>  
+            <tr>
+                <td></td>
+                <td><b>Pembayaran DIANGGAP SAH JIKA DANA SUDAH MASUK KE REKENING</b></td>
+            </tr>  
+            <tr>
+                <td></td>
+                <td><b>BANK BCA </b></td>
+            </tr> 
+            <tr>
+                <td></td>
+                <td><b>AC : 0877170822</b></td>
+            </tr> 
+            <tr>
+                <td></td>
+                <td><b>AN : ARION PANCA SEKAWAN .CV</b></td>
+            </tr> 
+            <tr>
+                <td>IV</td>
+                <td>Waktu pengambilan barang</td>
+            </tr>  
+            <tr>
+                <td></td>
+                <td>Realisasi pengambilan barang mohon info H-1 sebelum tanggal pengambilan</td>
+            </tr> 
+            <tr>
+                <td>V</td>
+                <td> Jika Sales Contract disetujui, mohon ditandatangani dan dikirim kembali</td>
+            </tr>  
+            <tr>
+                <td>Note</td>
+                <td>Harap SC ini diperiksa terlebih dahulu, bila terjadi kesalahan dalam pemesanan & SC udah di ACC pihak customer maka pihak CV.ARION PANCA SEKWAN tidak bertanggung jawab.</td>
+            </tr>  
+        </table>
+        <br>
+        <table id="ttd">
+            <tr>
+                <td>Hormat saya</td>
+                <td>Disetujui Oleh</td>
+            </tr>
+            <tr>
+                <td style="padding-top:50px">CV. ARION PANCA SEKAWAN</td>
+                <td style="padding-top:50px">Customer</td>
+            </tr>
+        </table>
     </div>
 </template>
 
@@ -181,9 +202,19 @@ export default{
     },
     data() {
         return {
-            form : this.form_sc_prop
+            // form : this.form_sc_prop
         }
+    },
+    computed : {
+        form(){
+            return this.form_sc_prop;
+        }
+    },
+    filters : {
+    rupiah(value){
+      return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
     }
+  },
 }
 </script>
 
@@ -195,8 +226,9 @@ export default{
   table#cetak   {
     border-collapse: collapse;
     margin: auto;
-    table-layout: fixed;
+    /* table-layout: fixed; */
     width: 100%;
+    text-align: center;
   }
 
   table#cetak td ,  table#cetak th {
@@ -206,5 +238,25 @@ export default{
     word-wrap: break-word;
     /* white-space: pre-wrap; */
     /* font-weight: bold; */
+    /* max-width: 500px; */
   }
+
+
+  table#condition td {
+      vertical-align: top;
+      min-width: 50px;
+      
+    }
+ 
+  table#ttd {
+        width: 100%;
+        /* border :1px solid black; */
+        text-align: center;
+        table-layout: fixed;
+    }
+
+  table#ttd td{
+        max-width: 50%;      
+        /* padding-top: 50px; */
+    }
 </style>

@@ -81,7 +81,7 @@
           </v-col>
           <v-col class="py-0" cols="12" md="4">            
             <v-text-field
-              label="alamat pengiriman"              
+              label="alamat pengambilan"              
               filled    
               small         
               dense 
@@ -320,8 +320,8 @@ export default {
            date : this.date,
            customer : this.customer,
            products : this.products,
-           grand_total_rp : this.grand_total_rp,
-           grand_total_qty : this.grand_total_qty,
+           grand_total_rp : this.sum_total,
+           grand_total_qty : this.sum_qty,
            ongkir : this.ongkir,
            sales_contract_no : this.sales_contract_no,
         }
