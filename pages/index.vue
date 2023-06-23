@@ -85,7 +85,7 @@
               filled    
               small         
               dense 
-              v-model = "customer.alamat_pengiriman"
+              v-model = "customer.alamat_pengambilan"
             >              
             </v-text-field>                   
           </v-col>
@@ -262,7 +262,7 @@
     </v-card>
     <div class="d-flex justify-end">
       <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
-      <v-btn disabled class="error mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan (soon)</v-btn>
+      <v-btn @click="simpan()" class="error mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan (soon)</v-btn>
     </div>
     <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
@@ -294,7 +294,8 @@ export default {
             nama :'',
             npwp :'',
             alamat:'',
-            alamat_pengiriman:'',
+            alamat_pengambilan:'',
+            customer_id:'',
        },
        products: [
           {
@@ -311,7 +312,8 @@ export default {
       grand_total : 0,
       grand_total_rp : '0',
       grand_total_qty : 0,
-      ongkir:0
+      ongkir:0,
+      sales_contract : ''
     } 
   },
   computed: {
@@ -319,9 +321,11 @@ export default {
         const form = {
            date : this.date,
            customer : this.customer,
+           customer_json : JSON.stringify(this.customer),
            products : this.products,
            grand_total_rp : this.sum_total,
            grand_total_qty : this.sum_qty,
+           grand_total: this.grand_total,
            ongkir : this.ongkir,
            sales_contract_no : this.sales_contract_no,
         }
@@ -357,6 +361,17 @@ export default {
     }
   },
   methods: {
+      simpan(){
+         
+         this.sales_contract = this.$axios.post('/sales_contract', this.form_sc)
+         .then(response => {
+              console.log(response);
+         })
+         .catch(error => {
+              console.log(error); 
+         });
+      },
+
       async exportToPDF() {
         const options = {
           margin: [5, 5, 5, 5], // Set the margins of the PDF
