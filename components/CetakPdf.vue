@@ -32,7 +32,7 @@
                 <tr>
                     <td style="margin-right : 10px">ALAMAT PENGAMBILAN</td>
                     <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.customer.alamat_pengiriman }}</td>
+                    <td>{{ form.customer.alamat_pengambilan }}</td>
                 </tr>
                 <tr>
                     <td style="margin-right : 10px"> CUSTOMER</td>
