@@ -16,80 +16,104 @@
     </v-card>      
     <v-card class="logo py-4">   
       <v-container>
-        <v-row class="mt-5">
-          <v-col class="py-0" cols="12">
-            <v-autocomplete
-              label = "cari nama customer"
-              clearable
-              filled
-              v-if="isAdding == false"
-              dense
-            >
-              <template v-slot:append-outer>
-                <v-slide-x-reverse-transition
-                  mode="out-in"
-                >
-                  <v-icon
-                    :key="`icon-${isAdding}`"
-                    :color="isAdding ? 'success' : 'info'"
-                    @click="isAdding = !isAdding"
-                    v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
-                  ></v-icon>
-                </v-slide-x-reverse-transition>
-              </template>      
-            </v-autocomplete>
-            <v-text-field
-              label="nama customer baru"
-              placeholder="nama"
-              filled
-              v-if ="isAdding == true"
-              dense
-              v-model="customer.nama"
-            >
-              <template v-slot:append-outer>
-                <v-slide-x-reverse-transition
-                  mode="out-in"
-                >
-                  <v-icon
-                    :key="`icon-${isAdding}`"
-                    :color="isAdding ? 'success' : 'info'"
-                    @click="isAdding = !isAdding"
-                    v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
-                  ></v-icon>
-                </v-slide-x-reverse-transition>
-              </template>      
-            </v-text-field>       
-          </v-col>
-          <v-col class="py-0" cols="12" md="4">            
-            <v-text-field
-              label="npwp"              
-              filled              
-              dense
-              v-model = "customer.npwp"
-            >              
-            </v-text-field>                   
-          </v-col>
-          <v-col class="py-0" cols="12" md="4">            
-            <v-text-field
-              label="alamat"              
-              filled    
-              small         
-              dense
-              v-model = "customer.alamat" 
-            >              
-            </v-text-field>                   
-          </v-col>
-          <v-col class="py-0" cols="12" md="4">            
-            <v-text-field
-              label="alamat pengambilan"              
-              filled    
-              small         
-              dense 
-              v-model = "customer.alamat_pengambilan"
-            >              
-            </v-text-field>                   
-          </v-col>
-        </v-row>
+        <v-form
+        ref="form"
+        v-model="valid_customer"
+        lazy-validation
+        >
+          <v-row class="mt-5">
+            <v-col class="py-0" cols="12">
+              <v-autocomplete
+                :rules="[v => !!v || 'Item is required']"
+                required
+                label = "cari nama customer"
+                clearable
+                filled
+                v-if="isAdding == false"
+                dense
+                item-text="att.name"
+                item-value="att"
+                :items = "list_customers"
+                :search-input.sync="search_customer"
+                :loading = "loading_customer"
+                v-model = "selected_customer"
+                @change = "updateCustomer()"
+              >
+              <template v-slot:item="{ item }">
+                {{item.att.name}} - {{ item.att.alamat }}
+              </template>
+                <template v-slot:append-outer>
+                  <v-slide-x-reverse-transition
+                    mode="out-in"
+                  >
+                    <v-icon
+                      :key="`icon-${isAdding}`"
+                      :color="isAdding ? 'success' : 'info'"
+                      @click="isAdding = !isAdding"
+                      v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
+                    ></v-icon>
+                  </v-slide-x-reverse-transition>
+                </template>      
+              </v-autocomplete>
+              <v-text-field
+                label="nama customer baru"
+                placeholder="nama"
+                filled
+                v-if ="isAdding == true"
+                dense
+                v-model="customer.nama"
+                required
+                :rules="[v => !!v || 'Item is required']"
+              >
+                <template v-slot:append-outer>
+                  <v-slide-x-reverse-transition
+                    mode="out-in"
+                  >
+                    <v-icon
+                      :key="`icon-${isAdding}`"
+                      :color="isAdding ? 'success' : 'info'"
+                      @click="isAdding = !isAdding"
+                      v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
+                    ></v-icon>
+                  </v-slide-x-reverse-transition>
+                </template>      
+              </v-text-field>       
+            </v-col>
+            <v-col class="py-0" cols="12" md="4">            
+              <v-text-field
+                label="npwp"              
+                filled              
+                dense
+                v-model = "customer.npwp"
+                required
+                :rules="[v => !!v || 'Item is required']"
+              >              
+              </v-text-field>                   
+            </v-col>
+            <v-col class="py-0" cols="12" md="4">            
+              <v-text-field
+                label="alamat"              
+                filled    
+                small         
+                dense
+                v-model = "customer.alamat" 
+                required
+                :rules="[v => !!v || 'Item is required']"
+              >              
+              </v-text-field>                   
+            </v-col>
+            <v-col class="py-0" cols="12" md="4">            
+              <v-text-field
+                label="alamat pengambilan"              
+                filled    
+                small         
+                dense 
+                v-model = "customer.alamat_pengambilan"              
+              >              
+              </v-text-field>                   
+            </v-col>
+          </v-row>
+        </v-form>
       </v-container>    
     </v-card>
     <v-dialog
@@ -267,7 +291,13 @@
     <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
     </div>
-  </v-container>   
+    <v-overlay v-model="loading_simpan">
+      <v-progress-circular
+        indeterminate
+        size="64"
+      ></v-progress-circular>
+    </v-overlay>   
+  </v-container>
 </template>
 
 <script>
@@ -284,12 +314,18 @@ export default {
   },
   data(){
     return {
+       valid_customer: true,
+       selected_customer: '',
+       loading_customer:false,
+       loading_simpan:false,
+       search_customer:'',
        html2pdf : '',
        isAddingOngkir : false,
        isAdding : true,
        sales_contract_no : 'SC/APS/XXX/bulan/tahun',
        date: '',
        modal: false,
+       list_customers : [ { att : {name:'test', id:1} }],
        customer : {
             nama :'',
             npwp :'',
@@ -323,11 +359,13 @@ export default {
            customer : this.customer,
            customer_json : JSON.stringify(this.customer),
            products : this.products,
+           products_json : JSON.stringify(this.products),
            grand_total_rp : this.sum_total,
            grand_total_qty : this.sum_qty,
            grand_total: this.grand_total,
            ongkir : this.ongkir,
            sales_contract_no : this.sales_contract_no,
+           customer_id : this.customer.customer_id,
         }
         return form;
      },
@@ -353,7 +391,15 @@ export default {
      }
   },
   watch :{
-
+     search_customer(value){
+        // this.getCustomers(value);
+        value && value !== this.selected_customer.name && value.length % 3 === 0 && this.getCustomers(value);
+     },
+     selected_customer(value){
+        if (value == null){
+          this.selected_customer = '';
+        }
+      }
   },
   filters : {
     rupiah(value){
@@ -361,15 +407,45 @@ export default {
     }
   },
   methods: {
-      simpan(){
-         
-         this.sales_contract = this.$axios.post('/sales_contract', this.form_sc)
+      validate_customer () {
+        this.$refs.form.validate()
+      },
+      updateCustomer(){
+        this.customer.nama = this.selected_customer.nama;
+        this.customer.alamat_pengambilan = this.selected_customer.alamat;
+        this.customer.customer_id = this.selected_customer.id;
+        this.customer.alamat = this.selected_customer.alamat;
+        this.customer.npwp = this.selected_customer.npwp;
+      },
+      getCustomers(value){
+        this.loading_customer = true;
+         this.$axios.post('/customers/search-customer', {name : value}) 
          .then(response => {
-              console.log(response);
+              this.list_customers = response.data.data.map(item => {
+                 return { att : {npwp : item.npwp, nama: item.name, name : item.name.toUpperCase(), alamat : item.alamat.toUpperCase(), id : item.id}}
+              });
+              this.loading_customer = false;
          })
          .catch(error => {
               console.log(error); 
+              this.loading_customer = false;
          });
+      },
+      async simpan(){
+         await this.validate_customer();
+
+         if (this.valid_customer == true){
+           this.loading_simpan = true;
+           this.sales_contract = this.$axios.post('/sales_contract', this.form_sc)
+           .then(response => {
+                console.log(response);
+                this.loading_simpan = false;
+           })
+           .catch(error => {
+                console.log(error); 
+                this.loading_simpan = false;
+           });
+         }
       },
 
       async exportToPDF() {
