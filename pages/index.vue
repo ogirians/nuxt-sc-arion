@@ -17,6 +17,7 @@
     <v-card class="logo py-4">   
       <v-container>
         <v-form
+        id = "form_customer"
         ref="form"
         v-model="valid_customer"
         lazy-validation
@@ -24,7 +25,7 @@
           <v-row class="mt-5">
             <v-col class="py-0" cols="12">
               <v-autocomplete
-                :rules="[v => !!v || 'Item is required']"
+                :rules="[v => !!v || 'Nama wajib diisi']"
                 required
                 label = "cari nama customer"
                 clearable
@@ -63,7 +64,7 @@
                 dense
                 v-model="customer.nama"
                 required
-                :rules="[v => !!v || 'Item is required']"
+                :rules="[v => !!v || 'nama wajib diisi']"
               >
                 <template v-slot:append-outer>
                   <v-slide-x-reverse-transition
@@ -86,7 +87,7 @@
                 dense
                 v-model = "customer.npwp"
                 required
-                :rules="[v => !!v || 'Item is required']"
+                :rules="[v => !!v || 'npwp wajib diisi ']"
               >              
               </v-text-field>                   
             </v-col>
@@ -98,7 +99,7 @@
                 dense
                 v-model = "customer.alamat" 
                 required
-                :rules="[v => !!v || 'Item is required']"
+                :rules="[v => !!v || 'alamat wajib diisi']"
               >              
               </v-text-field>                   
             </v-col>
@@ -131,7 +132,6 @@
             readonly
             v-bind="attrs"
             v-on="on"
-            
             class="mt-10 col-12 col-md-3"
           ></v-text-field>
         </template>
@@ -216,7 +216,26 @@
               v-for="(item, index) in products" :key = "index"      
             >
               <td class style="min-width: 70px;">
-                <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>                
+                <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>
+                <!-- <span style="display: inline;" v-if="error_simpan && error_simpan.data.validate_errors[index]"><v-icon small color="warning">mdi-alert-box</v-icon></span> -->
+                <v-tooltip
+                  top
+                  v-if="error_simpan && error_simpan.data.validate_errors[index]"
+                  color="warning"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <span
+                      icon
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon small color="warning">
+                        mdi-alert-box
+                      </v-icon>
+                    </span>
+                  </template>
+                  <span>error</span>
+                </v-tooltip>                
               </td>              
               <td>
                  <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
@@ -228,7 +247,7 @@
                  <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
               </td>              
               <td>
-                 <input style="width: 70px;" type="text" v-model="item.total_mtr"/>                    
+                 <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
               </td>              
               <td>
                  <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
@@ -295,7 +314,36 @@
       <v-progress-circular
         indeterminate
         size="64"
+        v-if="berhasil_simpan == false && gagal_simpan == false"
       ></v-progress-circular>
+      <v-sheet 
+        class="d-flex rounded-circle justify-center"
+        v-if="berhasil_simpan == true"
+        color="success"
+        height="100"
+        width="100"
+        >
+        <v-icon
+          size="64"
+          color="white"
+        >
+          mdi-check-outline
+        </v-icon>
+      </v-sheet>
+      <v-sheet 
+        class="d-flex rounded-circle justify-center"
+        v-if="gagal_simpan == true"
+        color="error"
+        height="100"
+        width="100"
+        >
+        <v-icon
+          size="64"
+          color="white"
+        >
+          mdi-close-outline
+        </v-icon>
+      </v-sheet>
     </v-overlay>   
   </v-container>
 </template>
@@ -314,10 +362,13 @@ export default {
   },
   data(){
     return {
+       error_simpan : '',
        valid_customer: true,
        selected_customer: '',
        loading_customer:false,
        loading_simpan:false,
+       berhasil_simpan : false,
+       gagal_simpan : false,
        search_customer:'',
        html2pdf : '',
        isAddingOngkir : false,
@@ -396,7 +447,7 @@ export default {
         value && value !== this.selected_customer.name && value.length % 3 === 0 && this.getCustomers(value);
      },
      selected_customer(value){
-        if (value == null){
+        if (value === null){
           this.selected_customer = '';
         }
       }
@@ -411,11 +462,13 @@ export default {
         this.$refs.form.validate()
       },
       updateCustomer(){
-        this.customer.nama = this.selected_customer.nama;
-        this.customer.alamat_pengambilan = this.selected_customer.alamat;
-        this.customer.customer_id = this.selected_customer.id;
-        this.customer.alamat = this.selected_customer.alamat;
-        this.customer.npwp = this.selected_customer.npwp;
+        if(this.selected_customer){
+          this.customer.nama = this.selected_customer.nama;
+          this.customer.alamat_pengambilan = this.selected_customer.alamat;
+          this.customer.customer_id = this.selected_customer.id;
+          this.customer.alamat = this.selected_customer.alamat;
+          this.customer.npwp = this.selected_customer.npwp;
+        }
       },
       getCustomers(value){
         this.loading_customer = true;
@@ -431,20 +484,36 @@ export default {
               this.loading_customer = false;
          });
       },
+
+      wait(ms) {
+        return new Promise(resolve => {
+          setTimeout(resolve, ms);
+        });
+      },
+
       async simpan(){
          await this.validate_customer();
 
          if (this.valid_customer == true){
            this.loading_simpan = true;
            this.sales_contract = this.$axios.post('/sales_contract', this.form_sc)
-           .then(response => {
+           .then(async response => {
                 console.log(response);
+                this.berhasil_simpan = true;
+                await this.wait(5000);
                 this.loading_simpan = false;
+                this.berhasil_simpan = false;
            })
-           .catch(error => {
-                console.log(error); 
+           .catch(async error => {
+                console.log(error.response.status);
+                this.gagal_simpan = true;
+                this.error_simpan = error.response;
+                await this.wait(5000); 
                 this.loading_simpan = false;
+                this.gagal_simpan = false;
            });
+         } else {
+           this.$vuetify.goTo('#form_customer')
          }
       },
 
