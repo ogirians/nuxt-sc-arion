@@ -167,6 +167,24 @@
         <v-btn small rounded color="secondary" @click="isAddingOngkir = true">
           <v-icon small>mdi-truck-flatbed</v-icon>
           <span v-if="$vuetify.breakpoint.name == 'md'"> ongkir</span>
+          <v-tooltip
+            top
+            v-if="error_simpan && error_simpan.data.validate_errors.ongkir"
+            color="warning"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <span
+                icon
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon small color="warning">
+                  mdi-alert-box
+                </v-icon>
+              </span>
+            </template>
+            <span>{{error_simpan.data.validate_errors.ongkir[0]}}</span>
+          </v-tooltip>
         </v-btn>
       </v-card-title>
        
@@ -215,42 +233,127 @@
             <tr
               v-for="(item, index) in products" :key = "index"      
             >
-              <td class style="min-width: 70px;">
+              <td class style="min-width: 50px;">
                 <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>
-                <!-- <span style="display: inline;" v-if="error_simpan && error_simpan.data.validate_errors[index]"><v-icon small color="warning">mdi-alert-box</v-icon></span> -->
-                <v-tooltip
-                  top
-                  v-if="error_simpan && error_simpan.data.validate_errors[index]"
-                  color="warning"
-                >
-                  <template v-slot:activator="{ on, attrs }">
-                    <span
-                      icon
-                      v-bind="attrs"
-                      v-on="on"
-                    >
-                      <v-icon small color="warning">
-                        mdi-alert-box
-                      </v-icon>
-                    </span>
-                  </template>
-                  <span>error</span>
-                </v-tooltip>                
               </td>              
               <td>
-                 <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
+                <div style="display: inline-flex; align-items: center;">
+                  <v-tooltip
+                    top
+                    v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].jenis_barang"
+                    color="warning"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <span
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                        <v-icon small color="warning" class="mr-2">
+                          mdi-alert-box
+                        </v-icon>
+                      </span>
+                    </template>
+                    <span>{{error_simpan.data.validate_errors[index].jenis_barang[0] }}</span>
+                  </v-tooltip>
+                   <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
+                </div>
               </td>              
               <td>
-                 <input style="width: 100px;" type="text" v-model="item.code_coil"/>                    
+                <div style="display: inline-flex; align-items: center;">
+                  <v-tooltip
+                    top
+                    v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].code_coil"
+                    color="warning"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <span
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        style="display: inline;"
+                      >
+                        <v-icon small color="warning" class="mr-2">
+                          mdi-alert-box
+                        </v-icon>
+                      </span>
+                    </template>
+                    <span style="display: inline;">{{error_simpan.data.validate_errors[index].code_coil[0] }}</span>
+                  </v-tooltip>
+                   <input style="width: 100px; display: inline;" type="text" v-model="item.code_coil"/>                    
+                </div>
               </td>              
               <td>
-                 <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
+                <div style="display: inline-flex; align-items: center;">
+                  <v-tooltip
+                    top
+                    v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].qty"
+                    color="warning"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <span
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        style="display: inline;"
+                      >
+                        <v-icon small color="warning" class="mr-2">
+                          mdi-alert-box
+                        </v-icon>
+                      </span>
+                    </template>
+                    <span style="display: inline;">{{error_simpan.data.validate_errors[index].qty[0] }}</span>
+                  </v-tooltip>
+                  <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
+                </div>
               </td>              
               <td>
-                 <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
+                <div style="display: inline-flex; align-items: center;">
+                  <v-tooltip
+                    top
+                    v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].total_mtr"
+                    color="warning"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <span
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        style="display: inline;"
+                      >
+                        <v-icon small color="warning" class="mr-2">
+                          mdi-alert-box
+                        </v-icon>
+                      </span>
+                    </template>
+                    <span style="display: inline;">{{error_simpan.data.validate_errors[index].total_mtr[0] }}</span>
+                  </v-tooltip>
+                  <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
+                </div>
               </td>              
               <td>
-                 <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
+                <div style="display: inline-flex; align-items: center;">
+                  <v-tooltip
+                    top
+                    v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].harga"
+                    color="warning"
+                  >
+                    <template v-slot:activator="{ on, attrs }">
+                      <span
+                        icon
+                        v-bind="attrs"
+                        v-on="on"
+                        style="display: inline;"
+                      >
+                        <v-icon small color="warning" class="mr-2">
+                          mdi-alert-box
+                        </v-icon>
+                      </span>
+                    </template>
+                    <span style="display: inline;">{{error_simpan.data.validate_errors[index].harga[0] }}</span>
+                  </v-tooltip>
+                  <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
+                </div>
               </td>              
               <td>
                  <!-- <input style="width: 100px;" type="text" v-model="item.total"/>                     -->
