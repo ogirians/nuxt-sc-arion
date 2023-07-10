@@ -1,17 +1,17 @@
 <template>
   <v-container>
     <v-card class="logo" color="primary">
-        <v-card-title class="pt-5 pt-md-0 pb-md-0">
+        <v-card-title>
             <span style="color:white" class="mr-5"> 
-              sales contract
+              Sales Contract
             </span>
-            <v-text-field
+            <!-- <v-text-field
               class="mt-3"
               dark
               v-model="sales_contract_no"
             >
                 
-            </v-text-field>          
+            </v-text-field>           -->
         </v-card-title>
     </v-card>      
     <v-card class="logo py-4">   
@@ -408,7 +408,7 @@
     </v-card>
     <div class="d-flex justify-end">
       <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
-      <v-btn @click="simpan()" class="error mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan (soon)</v-btn>
+      <v-btn @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
     </div>
     <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
