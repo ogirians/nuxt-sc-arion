@@ -1,13 +1,13 @@
 <template>
   <v-container>
-    <v-card class="logo" color="primary">
+    <v-card class="logo" color="primary" elevation="5">
         <v-card-title>
             <span style="color:white" class="mr-5"> 
               RIWAYAT
             </span>
         </v-card-title>
     </v-card>      
-    <v-card class="logo py-4 mb-10">   
+    <v-card class="logo py-4 mb-10" elevation="5">   
       <v-container>
         <v-card outlined>
           <v-data-table
@@ -25,6 +25,65 @@
             }"
           >
           <!-- :mobile-breakpoint="0"  to disbale vertical row -->
+          <template v-slot:top>
+            <v-row class="mt-3">
+              <v-col cols="12" md="4" >
+                <v-text-field
+                  v-model="search_sc"
+                  label="Cari nama atau nomor sales contract..."
+                  prepend-inner-icon="mdi-magnify"
+                  class="mx-4"
+                  outlined
+                  dense
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-dialog
+                  ref="dialog2"
+                  v-model="modal2"
+                  :return-value.sync="date_sc"
+                  persistent
+                  width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs2 }">
+                    <v-text-field            
+                      v-model="date_sc"
+                      label="tanggal_sc"
+                      prepend-inner-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs2"
+                      v-on="on"
+                      dense
+                      outlined
+                      class="mx-4"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="date_sc"
+                    scrollable          
+                  >
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="modal2 = false"
+                    >
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="$refs.dialog2.save(date_sc)"
+                    >
+                      OK
+                    </v-btn>
+                  </v-date-picker>
+              </v-dialog>
+              </v-col>
+              <v-col cols="12" md="4"></v-col>
+            </v-row>
+            <v-divider></v-divider>
+          </template>
           <template v-slot:item.actions="{ item }">
             <v-icon
               small
@@ -46,14 +105,14 @@
       </v-container>    
     </v-card>
 
-    <v-card class="logo" color="primary">
+    <v-card class="logo" color="primary" elevation="5">
         <v-card-title>
             <span style="color:white" class="mr-5"> 
               SALES CONTRACT
             </span>
         </v-card-title>
     </v-card>    
-    <v-card>
+    <v-card elevation="5">
       <v-container>
         <v-card class="logo mt-5" color="secondary">
             <v-card-title>
@@ -460,13 +519,14 @@
             </v-card>
           </v-overlay>
         </v-card>
+        <div class="d-flex justify-end">
+          <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
+          <v-btn @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
+        </div>
       </v-container>
     </v-card>
 
-    <div class="d-flex justify-end">
-      <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
-      <v-btn @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
-    </div>
+   
     <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
     </div>
@@ -543,6 +603,12 @@ export default {
             value: 'customer.name',
         },
         {
+            text: 'Tanggal Contract',
+            align: 'start',
+            sortable: false,
+            value: 'tanggal_sc',
+        },
+        {
             text: 'total contract',
             align: 'start',
             sortable: false,
@@ -557,6 +623,7 @@ export default {
         itemsPerPage: 5,
         itemsLength:0, // Number of items per page
        },
+       search_sc : '',
        loading_sc: false,
        error_simpan : '',
        valid_customer: true,
@@ -571,7 +638,9 @@ export default {
        isAdding : true,
        sales_contract_no : 'SC/APS/XXX/bulan/tahun',
        date: '',
+       date_sc: '',
        modal: false,
+       modal2:false,
        list_customers : [ { att : {name:'test', id:1} }],
        customer : {
             nama :'',
