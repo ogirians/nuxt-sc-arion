@@ -27,17 +27,18 @@
           <!-- :mobile-breakpoint="0"  to disbale vertical row -->
           <template v-slot:top>
             <v-row class="mt-3">
-              <v-col cols="12" md="4" >
+              <v-col cols="12" md="4" class="py-0">
                 <v-text-field
                   v-model="search_sc"
                   label="Cari nama atau nomor sales contract..."
                   prepend-inner-icon="mdi-magnify"
-                  class="mx-4"
+                  class="mx-4 py-0"
                   outlined
                   dense
+                  clearable
                 ></v-text-field>
               </v-col>
-              <v-col cols="12" md="4">
+              <v-col cols="12" md="4" class="py-0">
                 <v-dialog
                   ref="dialog2"
                   v-model="modal2"
@@ -55,7 +56,8 @@
                       v-on="on"
                       dense
                       outlined
-                      class="mx-4"
+                      class="mx-4 py-0"
+                      clearable
                     ></v-text-field>
                   </template>
                   <v-date-picker
@@ -80,7 +82,11 @@
                   </v-date-picker>
               </v-dialog>
               </v-col>
-              <v-col cols="12" md="4"></v-col>
+              <v-col cols="12" md="4" class="py-0 mb-3">
+                <v-btn @click="search_sales_contract()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
+                  cari
+                </v-btn>
+              </v-col>
             </v-row>
             <v-divider></v-divider>
           </template>
@@ -755,6 +761,33 @@ export default {
           // let addno = [];
           this.loading_sc = true;
           this.$axios.get('/sales_contract')
+          .then(response => {
+            console.log(response);
+            response.data.data.data.forEach((x ,index) => {
+                if(index == 0){
+                  x.no = response.data.data.from ;
+                }else{
+                  x.no = response.data.data.from + index ;
+                }
+                this.items_sc.push(x);
+            })
+            this.get_sales_contract_data =  response.data;
+            this.pagination.itemsLength = response.data.data.total
+            this.loading_sc = false;
+          })
+          .catch(error => {
+            console.log(error);
+            this.loading_sc = false;
+          })
+      },  
+      search_sales_contract() {
+          // let addno = [];
+          this.loading_sc = true;
+          this.pagination.page = 1;
+          this.get_sales_contract_data = '';
+          this.items_sc = [];
+
+          this.$axios.post('/sales_contract/search-sc', {search_sc : this.search_sc , date_sc : this.date_sc})
           .then(response => {
             console.log(response);
             response.data.data.data.forEach((x ,index) => {
