@@ -5,6 +5,11 @@
             <span style="color:white" class="mr-5"> 
               RIWAYAT
             </span>
+            <v-spacer></v-spacer>
+            <v-btn small rounded color="success" class="mr-3" @click="open_form_page()">
+              <v-icon small>mdi-plus</v-icon>
+              <span v-if="$vuetify.breakpoint.name == 'md'">sales contract</span>
+            </v-btn>
         </v-card-title>
     </v-card>      
     <v-card class="logo py-4 mb-10" elevation="5">   
@@ -25,7 +30,7 @@
             }"
           >
           <!-- :mobile-breakpoint="0"  to disbale vertical row -->
-          <template v-slot:top>
+          <template v-slot:top="{ item }">
             <v-row class="mt-3">
               <v-col cols="12" md="4" class="py-0">
                 <v-text-field
@@ -89,21 +94,45 @@
               </v-col>
             </v-row>
             <v-divider></v-divider>
+            <v-dialog v-model="dialog_delete_sc" max-width="500px">
+              <v-card>
+                <v-card-title class="text-h5">hapus sales contract ini?</v-card-title>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="blue darken-1" text @click="close_dialog_delete()">Batal</v-btn>
+                  <v-btn color="blue darken-1" text @click="delete_sales_contract(item)">OK</v-btn>
+                  <v-spacer></v-spacer>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </template>
           <template v-slot:item.actions="{ item }">
             <v-icon
               small
               class="mr-2"
-              @click="editItem(item)"
+              color="warning"
+              @click="pdf()"
+            >
+              mdi-file-pdf-box
+            </v-icon>
+            <v-icon
+              small
+              class="mr-2"
+              color="success"
+              @click="show_sales_contract(item.id)"
             >
               mdi-pencil
             </v-icon>
             <v-icon
               small
-              @click="deleteItem(item)"
+              color="error"
+              @click="show_dialog_delete(item.id)"
             >
               mdi-delete
             </v-icon>
+          </template>
+          <template v-slot:item.total="{ item }">
+            {{ item.total | rupiah }}
           </template>
         
         </v-data-table>
@@ -111,424 +140,443 @@
       </v-container>    
     </v-card>
 
-    <v-card class="logo" color="primary" elevation="5">
+    <v-card class="logo" color="primary" elevation="5" :loading="loading_open_form">
         <v-card-title>
             <span style="color:white" class="mr-5"> 
               SALES CONTRACT
             </span>
+            <v-spacer></v-spacer>
+            <v-btn small rounded color="error" class="mr-3" @click="close_form_page()">
+              <v-icon small>mdi-close</v-icon>
+              <span v-if="$vuetify.breakpoint.name == 'md'">clear</span>
+            </v-btn>
         </v-card-title>
     </v-card>    
-    <v-card elevation="5">
+    <v-card elevation="5" :loading="loading_open_form">
       <v-container>
-        <v-card class="logo mt-5" color="secondary">
-            <v-card-title>
-                <span style="color:white" class="mr-5"> 
-                  Customer
-                </span>
-                <!-- <v-text-field
-                  class="mt-3"
-                  dark
-                  v-model="sales_contract_no"
-                >
-                    
-                </v-text-field>           -->
-            </v-card-title>
-        </v-card>      
-        <v-card class="logo py-4" outlined>   
-          <v-container>
-            <v-form
-            id = "form_customer"
-            ref="form"
-            v-model="valid_customer"
-            lazy-validation
-            >
-              <v-row class="mt-5">
-                <v-col class="py-0" cols="12">
-                  <v-autocomplete
-                    :rules="[v => !!v || 'Nama wajib diisi']"
-                    required
-                    label = "cari nama customer"
-                    clearable
-                    filled
-                    v-if="isAdding == false"
-                    dense
-                    item-text="att.name"
-                    item-value="att"
-                    :items = "list_customers"
-                    :search-input.sync="search_customer"
-                    :loading = "loading_customer"
-                    v-model = "selected_customer"
-                    @change = "updateCustomer()"
-                  >
-                  <template v-slot:item="{ item }">
-                    {{item.att.name}} - {{ item.att.alamat }}
-                  </template>
-                    <template v-slot:append-outer>
-                      <v-slide-x-reverse-transition
-                        mode="out-in"
-                      >
-                        <v-icon
-                          :key="`icon-${isAdding}`"
-                          :color="isAdding ? 'success' : 'info'"
-                          @click="isAdding = !isAdding"
-                          v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
-                        ></v-icon>
-                      </v-slide-x-reverse-transition>
-                    </template>      
-                  </v-autocomplete>
-                  <v-text-field
-                    label="nama customer baru"
-                    placeholder="nama"
-                    filled
-                    v-if ="isAdding == true"
-                    dense
-                    v-model="customer.nama"
-                    required
-                    :rules="[v => !!v || 'nama wajib diisi']"
-                  >
-                    <template v-slot:append-outer>
-                      <v-slide-x-reverse-transition
-                        mode="out-in"
-                      >
-                        <v-icon
-                          :key="`icon-${isAdding}`"
-                          :color="isAdding ? 'success' : 'info'"
-                          @click="isAdding = !isAdding"
-                          v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
-                        ></v-icon>
-                      </v-slide-x-reverse-transition>
-                    </template>      
-                  </v-text-field>       
-                </v-col>
-                <v-col class="py-0" cols="12" md="4">            
-                  <v-text-field
-                    label="npwp"              
-                    filled              
-                    dense
-                    v-model = "customer.npwp"
-                    required
-                    :rules="[v => !!v || 'npwp wajib diisi ']"
-                  >              
-                  </v-text-field>                   
-                </v-col>
-                <v-col class="py-0" cols="12" md="4">            
-                  <v-text-field
-                    label="alamat"              
-                    filled    
-                    small         
-                    dense
-                    v-model = "customer.alamat" 
-                    required
-                    :rules="[v => !!v || 'alamat wajib diisi']"
-                  >              
-                  </v-text-field>                   
-                </v-col>
-                <v-col class="py-0" cols="12" md="4">            
-                  <v-text-field
-                    label="alamat pengambilan"              
-                    filled    
-                    small         
-                    dense 
-                    v-model = "customer.alamat_pengambilan"              
-                  >              
-                  </v-text-field>                   
-                </v-col>
-              </v-row>
-            </v-form>
-          </v-container>    
-        </v-card>
-        <v-dialog
-            ref="dialog"
-            v-model="modal"
-            :return-value.sync="date"
-            persistent
-            width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field            
-                v-model="date"
-                label="tanggal"
-                prepend-icon="mdi-calendar"
-                readonly
-                v-bind="attrs"
-                v-on="on"
-                class="mt-10 col-12 col-md-3"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="date"
-              scrollable          
-            >
-              <v-spacer></v-spacer>
-              <v-btn
-                text
-                color="primary"
-                @click="modal = false"
-              >
-                Cancel
-              </v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.dialog.save(date)"
-              >
-                OK
-              </v-btn>
-            </v-date-picker>
-        </v-dialog>
-        <v-card color="secondary" dark>
-           <v-card-title>
-            <span>List barang</span>
-            <v-spacer></v-spacer>
-            <v-btn small rounded color="success" class="mr-3" @click="AddProduct()">
-              <v-icon small>mdi-plus</v-icon>
-              <span v-if="$vuetify.breakpoint.name == 'md'">item</span>
-            </v-btn>
-            <v-btn small rounded color="info" @click="isAddingOngkir = true">
-              <v-icon small>mdi-truck-flatbed</v-icon>
-              <span v-if="$vuetify.breakpoint.name == 'md'"> ongkir</span>
-              <v-tooltip
-                top
-                v-if="error_simpan && error_simpan.data.validate_errors.ongkir"
-                color="warning"
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <span
-                    icon
-                    v-bind="attrs"
-                    v-on="on"
-                  >
-                    <v-icon small color="warning">
-                      mdi-alert-box
-                    </v-icon>
+        <div v-if="open_sc_form == true">
+          <v-card class="logo mt-5" color="secondary">
+              <v-card-title>
+                  <span style="color:white" class="mr-5"> 
+                    Customer
                   </span>
-                </template>
-                <span>{{error_simpan.data.validate_errors.ongkir[0]}}</span>
-              </v-tooltip>
-            </v-btn>
-          </v-card-title>
-        </v-card>
-        <v-card class="logo" outlined>
-          <v-simple-table        
-            id = "table-products"
-          >
-            <template v-slot:default>
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    NO
-                  </th>
-                  <th class="text-left">
-                    JENIS BARANG<br>
-                    <v-icon @click="CopyValue('jenis_barang')" small>mdi-list-box-outline</v-icon>
-                     persis
-                  </th>
-                  <th class="text-left">
-                    CODE COIL<br>
-                    <v-icon @click="CopyValue('code_coil')" small>mdi-list-box-outline</v-icon>
-                     persis
-                  </th>
-                  <th class="text-left">
-                    QTY (Kg)<br>
-                    <v-icon @click="CopyValue('qty')" small>mdi-list-box-outline</v-icon>
-                     persis
-                  </th>
-                  <th class="text-left">
-                    TOTAL (Mtr)<br>
-                    <v-icon @click="CopyValue('total_mtr')" small>mdi-list-box-outline</v-icon>
-                     persis
-                  </th>
-                  <th class="text-left">
-                    HARGA<br>
-                    <v-icon @click="CopyValue('harga')" small>mdi-list-box-outline</v-icon>
-                     persis
-                  </th>
-                  <th class="text-left">
-                    TOTAL
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(item, index) in products" :key = "index"      
-                >
-                  <td class style="min-width: 50px;">
-                    <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>
-                  </td>              
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <v-tooltip
-                        top
-                        v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].jenis_barang"
-                        color="warning"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <span
-                            icon
-                            v-bind="attrs"
-                            v-on="on"
-                          >
-                            <v-icon small color="warning" class="mr-2">
-                              mdi-alert-box
-                            </v-icon>
-                          </span>
-                        </template>
-                        <span>{{error_simpan.data.validate_errors[index].jenis_barang[0] }}</span>
-                      </v-tooltip>
-                       <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
-                    </div>
-                  </td>              
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <v-tooltip
-                        top
-                        v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].code_coil"
-                        color="warning"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <span
-                            icon
-                            v-bind="attrs"
-                            v-on="on"
-                            style="display: inline;"
-                          >
-                            <v-icon small color="warning" class="mr-2">
-                              mdi-alert-box
-                            </v-icon>
-                          </span>
-                        </template>
-                        <span style="display: inline;">{{error_simpan.data.validate_errors[index].code_coil[0] }}</span>
-                      </v-tooltip>
-                       <input style="width: 100px; display: inline;" type="text" v-model="item.code_coil"/>                    
-                    </div>
-                  </td>              
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <v-tooltip
-                        top
-                        v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].qty"
-                        color="warning"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <span
-                            icon
-                            v-bind="attrs"
-                            v-on="on"
-                            style="display: inline;"
-                          >
-                            <v-icon small color="warning" class="mr-2">
-                              mdi-alert-box
-                            </v-icon>
-                          </span>
-                        </template>
-                        <span style="display: inline;">{{error_simpan.data.validate_errors[index].qty[0] }}</span>
-                      </v-tooltip>
-                      <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
-                    </div>
-                  </td>              
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <v-tooltip
-                        top
-                        v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].total_mtr"
-                        color="warning"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <span
-                            icon
-                            v-bind="attrs"
-                            v-on="on"
-                            style="display: inline;"
-                          >
-                            <v-icon small color="warning" class="mr-2">
-                              mdi-alert-box
-                            </v-icon>
-                          </span>
-                        </template>
-                        <span style="display: inline;">{{error_simpan.data.validate_errors[index].total_mtr[0] }}</span>
-                      </v-tooltip>
-                      <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
-                    </div>
-                  </td>              
-                  <td>
-                    <div style="display: inline-flex; align-items: center;">
-                      <v-tooltip
-                        top
-                        v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].harga"
-                        color="warning"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <span
-                            icon
-                            v-bind="attrs"
-                            v-on="on"
-                            style="display: inline;"
-                          >
-                            <v-icon small color="warning" class="mr-2">
-                              mdi-alert-box
-                            </v-icon>
-                          </span>
-                        </template>
-                        <span style="display: inline;">{{error_simpan.data.validate_errors[index].harga[0] }}</span>
-                      </v-tooltip>
-                      <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
-                    </div>
-                  </td>              
-                  <td>
-                     <!-- <input style="width: 100px;" type="text" v-model="item.total"/>                     -->
-                      {{ item.total_rp }}
-                    </td>              
-                </tr>
-              </tbody>
-            </template>
-          </v-simple-table>
-          <v-divider></v-divider>
-          <v-card-actions class="ml-5 mt-5 pb-0">
-             <h4>total contract : <span style="color:red">{{ sum_total }}</span> </h4>
-            </v-card-actions>
-          <v-card-actions class="ml-5 pt-0 pb-0">
-            <h5 class="">ongkos kirim : <span>{{ ongkir | rupiah}}</span> </h5>
-          </v-card-actions>
-          <v-card-actions class="ml-5 pt-0">
-            <h5 class="mb-5">total qty : <span>{{ sum_qty }} kg</span> </h5>
-          </v-card-actions>
-          <v-overlay
-              :absolute="false"
-              :value="isAddingOngkir"
+                  <!-- <v-text-field
+                    class="mt-3"
+                    dark
+                    v-model="sales_contract_no"
+                  >
+                      
+                  </v-text-field>           -->
+              </v-card-title>
+          </v-card>      
+          <v-card class="logo py-4" outlined>   
+            <v-container>
+              <v-form
+              id = "form_customer"
+              ref="form"
+              v-model="valid_customer"
+              lazy-validation
+              >
+                <v-row class="mt-5">
+                  <v-col class="py-0" cols="12">
+                    <v-autocomplete
+                      :rules="[v => !!v || 'Nama wajib diisi']"
+                      required
+                      label = "cari nama customer"
+                      clearable
+                      filled
+                      v-if="isAdding == false"
+                      dense
+                      item-text="att.name"
+                      item-value="att"
+                      :items = "list_customers"
+                      :search-input.sync="search_customer"
+                      :loading = "loading_customer"
+                      v-model = "selected_customer"
+                      @change = "updateCustomer()"
+                    >
+                    <template v-slot:item="{ item }">
+                      {{item.att.name}} - {{ item.att.alamat }}
+                    </template>
+                      <template v-slot:append-outer>
+                        <v-slide-x-reverse-transition
+                          mode="out-in"
+                        >
+                          <v-icon
+                            :key="`icon-${isAdding}`"
+                            :color="isAdding ? 'success' : 'info'"
+                            @click="isAdding = !isAdding"
+                            v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
+                          ></v-icon>
+                        </v-slide-x-reverse-transition>
+                      </template>      
+                    </v-autocomplete>
+                    <v-text-field
+                      label="nama customer baru"
+                      placeholder="nama"
+                      filled
+                      v-if ="isAdding == true"
+                      dense
+                      v-model="customer.nama"
+                      required
+                      :rules="[v => !!v || 'nama wajib diisi']"
+                    >
+                      <template v-slot:append-outer>
+                        <v-slide-x-reverse-transition
+                          mode="out-in"
+                        >
+                          <v-icon
+                            :key="`icon-${isAdding}`"
+                            :color="isAdding ? 'success' : 'info'"
+                            @click="isAdding = !isAdding"
+                            v-text="isAdding ? 'mdi-list-box-outline' : 'mdi-plus-circle'"
+                          ></v-icon>
+                        </v-slide-x-reverse-transition>
+                      </template>      
+                    </v-text-field>       
+                  </v-col>
+                  <v-col class="py-0" cols="12" md="4">            
+                    <v-text-field
+                      label="npwp"              
+                      filled              
+                      dense
+                      v-model = "customer.npwp"
+                      required
+                      :rules="[v => !!v || 'npwp wajib diisi ']"
+                    >              
+                    </v-text-field>                   
+                  </v-col>
+                  <v-col class="py-0" cols="12" md="4">            
+                    <v-text-field
+                      label="alamat"              
+                      filled    
+                      small         
+                      dense
+                      v-model = "customer.alamat" 
+                      required
+                      :rules="[v => !!v || 'alamat wajib diisi']"
+                    >              
+                    </v-text-field>                   
+                  </v-col>
+                  <v-col class="py-0" cols="12" md="4">            
+                    <v-text-field
+                      label="alamat pengambilan"              
+                      filled    
+                      small         
+                      dense 
+                      v-model = "customer.alamat_pengambilan"              
+                    >              
+                    </v-text-field>                   
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-container>    
+          </v-card>
+          <v-dialog
+              ref="dialog"
+              v-model="modal"
+              :return-value.sync="date"
+              persistent
+              width="290px"
             >
-            <v-card 
-              
-              light
-            >
-              <v-card-title>ongkos kirim: </v-card-title>
-              <v-divider></v-divider>
-                <v-text-field
-                dense
-                class="ma-5"
-                label="ongkir"
-                filled
-                rounded
-                v-model="ongkir"
-                >
-                </v-text-field>
-              <v-divider></v-divider>
-              <v-card-actions class="d-flex justify-end">            
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field            
+                  v-model="date"
+                  label="tanggal"
+                  prepend-icon="mdi-calendar"
+                  readonly
+                  v-bind="attrs"
+                  v-on="on"
+                  class="mt-10 col-12 col-md-3"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model="date"
+                scrollable          
+              >
+                <v-spacer></v-spacer>
                 <v-btn
-                  small
-                  class=""
-                  color="success"
-                  @click="isAddingOngkir = false"
+                  text
+                  color="primary"
+                  @click="modal = false"
                 >
-                  simpan
+                  Cancel
                 </v-btn>
-              </v-card-actions>          
-            </v-card>
-          </v-overlay>
-        </v-card>
-        <div class="d-flex justify-end">
-          <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn>
+                <v-btn
+                  text
+                  color="primary"
+                  @click="$refs.dialog.save(date)"
+                >
+                  OK
+                </v-btn>
+              </v-date-picker>
+          </v-dialog>
+          <v-card color="secondary" dark>
+             <v-card-title>
+              <span>List barang</span>
+              <v-spacer></v-spacer>
+              <v-btn small rounded color="success" class="mr-3" @click="AddProduct()">
+                <v-icon small>mdi-plus</v-icon>
+                <span v-if="$vuetify.breakpoint.name == 'md'">item</span>
+              </v-btn>
+              <v-btn small rounded color="info" @click="isAddingOngkir = true">
+                <v-icon small>mdi-truck-flatbed</v-icon>
+                <span v-if="$vuetify.breakpoint.name == 'md'"> ongkir</span>
+                <v-tooltip
+                  top
+                  v-if="error_simpan && error_simpan.data.validate_errors.ongkir"
+                  color="warning"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <span
+                      icon
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon small color="warning">
+                        mdi-alert-box
+                      </v-icon>
+                    </span>
+                  </template>
+                  <span>{{error_simpan.data.validate_errors.ongkir[0]}}</span>
+                </v-tooltip>
+              </v-btn>
+            </v-card-title>
+          </v-card>
+          <v-card class="logo" outlined>
+            <v-simple-table        
+              id = "table-products"
+            >
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th class="text-left">
+                      NO
+                    </th>
+                    <th class="text-left">
+                      JENIS BARANG<br>
+                      <v-icon @click="CopyValue('jenis_barang')" small>mdi-list-box-outline</v-icon>
+                       persis
+                    </th>
+                    <th class="text-left">
+                      CODE COIL<br>
+                      <v-icon @click="CopyValue('code_coil')" small>mdi-list-box-outline</v-icon>
+                       persis
+                    </th>
+                    <th class="text-left">
+                      QTY (Kg)<br>
+                      <v-icon @click="CopyValue('qty')" small>mdi-list-box-outline</v-icon>
+                       persis
+                    </th>
+                    <th class="text-left">
+                      TOTAL (Mtr)<br>
+                      <v-icon @click="CopyValue('total_mtr')" small>mdi-list-box-outline</v-icon>
+                       persis
+                    </th>
+                    <th class="text-left">
+                      HARGA<br>
+                      <v-icon @click="CopyValue('harga')" small>mdi-list-box-outline</v-icon>
+                       persis
+                    </th>
+                    <th class="text-left">
+                      TOTAL
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(item, index) in products" :key = "index"      
+                  >
+                    <td class style="min-width: 50px;">
+                      <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>
+                    </td>              
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <v-tooltip
+                          top
+                          v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].jenis_barang"
+                          color="warning"
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                            >
+                              <v-icon small color="warning" class="mr-2">
+                                mdi-alert-box
+                              </v-icon>
+                            </span>
+                          </template>
+                          <span>{{error_simpan.data.validate_errors[index].jenis_barang[0] }}</span>
+                        </v-tooltip>
+                         <input style="width: 300px;" type="text" v-model="item.jenis_barang"/>                    
+                      </div>
+                    </td>              
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <v-tooltip
+                          top
+                          v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].code_coil"
+                          color="warning"
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                              style="display: inline;"
+                            >
+                              <v-icon small color="warning" class="mr-2">
+                                mdi-alert-box
+                              </v-icon>
+                            </span>
+                          </template>
+                          <span style="display: inline;">{{error_simpan.data.validate_errors[index].code_coil[0] }}</span>
+                        </v-tooltip>
+                         <input style="width: 100px; display: inline;" type="text" v-model="item.code_coil"/>                    
+                      </div>
+                    </td>              
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <v-tooltip
+                          top
+                          v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].qty"
+                          color="warning"
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                              style="display: inline;"
+                            >
+                              <v-icon small color="warning" class="mr-2">
+                                mdi-alert-box
+                              </v-icon>
+                            </span>
+                          </template>
+                          <span style="display: inline;">{{error_simpan.data.validate_errors[index].qty[0] }}</span>
+                        </v-tooltip>
+                        <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
+                      </div>
+                    </td>              
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <v-tooltip
+                          top
+                          v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].total_mtr"
+                          color="warning"
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                              style="display: inline;"
+                            >
+                              <v-icon small color="warning" class="mr-2">
+                                mdi-alert-box
+                              </v-icon>
+                            </span>
+                          </template>
+                          <span style="display: inline;">{{error_simpan.data.validate_errors[index].total_mtr[0] }}</span>
+                        </v-tooltip>
+                        <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
+                      </div>
+                    </td>              
+                    <td>
+                      <div style="display: inline-flex; align-items: center;">
+                        <v-tooltip
+                          top
+                          v-if="error_simpan && error_simpan.data.validate_errors[index] && error_simpan.data.validate_errors[index].harga"
+                          color="warning"
+                        >
+                          <template v-slot:activator="{ on, attrs }">
+                            <span
+                              icon
+                              v-bind="attrs"
+                              v-on="on"
+                              style="display: inline;"
+                            >
+                              <v-icon small color="warning" class="mr-2">
+                                mdi-alert-box
+                              </v-icon>
+                            </span>
+                          </template>
+                          <span style="display: inline;">{{error_simpan.data.validate_errors[index].harga[0] }}</span>
+                        </v-tooltip>
+                        <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
+                      </div>
+                    </td>              
+                    <td>
+                       <!-- <input style="width: 100px;" type="text" v-model="item.total"/>                     -->
+                        {{ item.total_rp }}
+                      </td>              
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
+            <v-divider></v-divider>
+            <v-card-actions class="ml-5 mt-5 pb-0">
+               <h4>total contract : <span style="color:red">{{ sum_total }}</span> </h4>
+              </v-card-actions>
+            <v-card-actions class="ml-5 pt-0 pb-0">
+              <h5 class="">ongkos kirim : <span>{{ ongkir | rupiah}}</span> </h5>
+            </v-card-actions>
+            <v-card-actions class="ml-5 pt-0">
+              <h5 class="mb-5">total qty : <span>{{ sum_qty }} kg</span> </h5>
+            </v-card-actions>
+            <v-overlay
+                :absolute="false"
+                :value="isAddingOngkir"
+              >
+              <v-card 
+                
+                light
+              >
+                <v-card-title>ongkos kirim: </v-card-title>
+                <v-divider></v-divider>
+                  <v-text-field
+                  dense
+                  class="ma-5"
+                  label="ongkir"
+                  filled
+                  rounded
+                  v-model="ongkir"
+                  >
+                  </v-text-field>
+                <v-divider></v-divider>
+                <v-card-actions class="d-flex justify-end">            
+                  <v-btn
+                    small
+                    class=""
+                    color="success"
+                    @click="isAddingOngkir = false"
+                  >
+                    simpan
+                  </v-btn>
+                </v-card-actions>          
+              </v-card>
+            </v-overlay>
+          </v-card>
+          <div class="d-flex justify-end">
+          <!-- <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn> -->
           <v-btn @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
         </div>
+        </div>
+        <div v-else>
+           <v-card outlined>
+              <v-container class="d-flex justify-center"><span style="color:grey">tambahkan atau edit sales contract..</span></v-container>
+           </v-card>
+        </div>
+       
+        <v-overlay v-model="loading_open_form" :absolute="true">
+          <v-progress-circular
+            indeterminate
+            size="40"
+            ></v-progress-circular>
+        </v-overlay>   
       </v-container>
     </v-card>
 
@@ -585,7 +633,7 @@ export default {
     this.get_sales_contract();
   },
   created(){
-    this.date = this.$moment().format('YYYY-MM-DD');;
+    this.date = this.$moment().format('YYYY-MM-DD');
   },
   data(){
     return {
@@ -622,7 +670,11 @@ export default {
         },
         { text: 'Actions', value: 'actions', sortable: false },
        ],
+       open_sc_form : false,
+       loading_open_form: false,
        get_sales_contract_data: '',
+       dialog_delete_sc: false,
+       sc_id_todelete : '',
        items_sc :[],
        pagination: {
         page: 1, // Current page
@@ -729,6 +781,72 @@ export default {
     }
   },
   methods: {
+      clear_form(){
+          this.date = this.$moment().format('YYYY-MM-DD');;
+          this.customer = {
+            nama :'',
+            npwp :'',
+            alamat:'',
+            alamat_pengambilan:'',
+            customer_id:'',
+          };
+          this.products = [{
+            jenis_barang: '',
+            code_coil: '',
+            qty: 1,
+            total_mtr:'',
+            harga_rp: '',
+            harga: '',
+            total_rp: '',
+            total: '',
+          }],      
+          this.grand_total = '';
+          this.grand_total_qty = '';
+          this.ongkir = '';
+          this.sales_contract_no = '';
+          this.customer.customer_id = '';
+      },
+      async open_form_page(){
+        this.loading_open_form = true;
+        await this.wait(1000);
+        this.open_sc_form = true;
+        this.loading_open_form = false
+      },
+      async close_form_page(){
+        this.clear_form();
+        this.loading_open_form = true;
+        await this.wait(1000);
+        this.open_sc_form = false;
+        this.loading_open_form = false
+      },
+      show_dialog_delete(id){
+        this.dialog_delete_sc = true;
+        this.sc_id_todelete = id;
+      },
+      close_dialog_delete(){
+        this.dialog_delete_sc = false;
+      },
+      delete_sales_contract(){
+        // console.log(item.id);
+        this.dialog_delete_sc = false
+        this.loading_simpan = true;
+        this.loading_sc = true;
+        this.pagination.page = 0;
+        this.get_sales_contract_data = '';
+        this.items_sc = [];
+        this.$axios.delete('sales_contract/'+this.sc_id_todelete)
+        .then( async response => {
+          // console.log(response);
+          // this.get_sales_contract();
+          await this.wait(2000);
+          this.loading_simpan = false;
+          this.loading_sc = false;
+        })
+        .catch(error => {
+          console.log(error);
+          this.loading_sc = false;
+            })
+      },
       handlePagination(pagination) {
         if(this.pagination.page != pagination.page){
            this.loading_sc = true;
@@ -738,7 +856,7 @@ export default {
            console.log(pagination)
            this.$axios.get('sales_contract?page='+pagination.page)
            .then(response => {
-              console.log(response);
+              // console.log(response);
               response.data.data.data.forEach((x ,index) => {
                   if(index == 0){
                     x.no = response.data.data.from ;
@@ -762,7 +880,7 @@ export default {
           this.loading_sc = true;
           this.$axios.get('/sales_contract')
           .then(response => {
-            console.log(response);
+            // console.log(response);
             response.data.data.data.forEach((x ,index) => {
                 if(index == 0){
                   x.no = response.data.data.from ;
@@ -780,6 +898,45 @@ export default {
             this.loading_sc = false;
           })
       },  
+      show_sales_contract(id) {
+          this.open_sc_form = true;
+          this.loading_open_form = true;
+          this.$axios.get('/sales_contract/'+id)
+          .then(response => {
+            console.log(response.data.data);
+            var data = response.data.data;
+            this.date = data.tanggal_sc;
+            this.customer = {
+              nama : data.customer.name,
+              npwp :   data.customer.npwp,
+              alamat:  data.customer.alamat,
+              alamat_pengambilan:  data.alamat_pengambilan,
+              customer_id:  data.customer.id
+            };
+            this.products = [{
+              jenis_barang: '',
+              code_coil: '',
+              qty: 1,
+              total_mtr:'',
+              harga_rp: '',
+              harga: '',
+              total_rp: '',
+              total: '',
+            }],      
+            this.grand_total = data.total;
+            this.grand_total_qty = '';
+            this.ongkir = data.ongkir;
+            this.sales_contract_no = data.nomor_sc;
+            this.customer.customer_id = data.customer.id;
+
+            
+            this.loading_open_form = false;
+          })
+          .catch(error => {
+            console.log(error);
+            this.loading_sc = false;
+          })
+      },  
       search_sales_contract() {
           // let addno = [];
           this.loading_sc = true;
@@ -789,7 +946,7 @@ export default {
 
           this.$axios.post('/sales_contract/search-sc', {search_sc : this.search_sc , date_sc : this.date_sc})
           .then(response => {
-            console.log(response);
+            // console.log(response);
             response.data.data.data.forEach((x ,index) => {
                 if(index == 0){
                   x.no = response.data.data.from ;
