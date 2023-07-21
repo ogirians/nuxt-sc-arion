@@ -805,6 +805,7 @@ export default {
           this.error_simpan = '';
       },
       async open_form_page(){
+        this.clear_form();
         this.sc_id = '';
         this.loading_open_form = true;
         await this.wait(1000);
@@ -1057,6 +1058,7 @@ export default {
       },
       async exportToPDF(id) {
         this.close_form_page();
+        this.clear_form();
         let fetch_sc = await this.show_sales_contract(id, 'export');
         if(fetch_sc){
           console.log('telah fetch')
