@@ -111,7 +111,7 @@
               small
               class="mr-2"
               color="warning"
-              @click="pdf()"
+              @click="exportToPDF(item.id)"
             >
               mdi-file-pdf-box
             </v-icon>
@@ -119,7 +119,7 @@
               small
               class="mr-2"
               color="success"
-              @click="show_sales_contract(item.id)"
+              @click="show_sales_contract(item.id , 'edit')"
             >
               mdi-pencil
             </v-icon>
@@ -387,7 +387,7 @@
                   <tr
                     v-for="(item, index) in products" :key = "index"      
                   >
-                    <td class style="min-width: 50px;">
+                    <td class style="min-width: 80px;">
                       <span style="display: inline;">{{ index + 1 }}<v-icon @click="RmProduct(index)" small color="error">mdi-minus-circle</v-icon></span>
                     </td>              
                     <td>
@@ -562,7 +562,8 @@
           </v-card>
           <div class="d-flex justify-end">
           <!-- <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn> -->
-          <v-btn @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
+          <v-btn v-if="this.sc_id == ''" @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
+          <v-btn v-else @click="update()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>Update</v-btn>
         </div>
         </div>
         <div v-else>
@@ -670,6 +671,7 @@ export default {
         },
         { text: 'Actions', value: 'actions', sortable: false },
        ],
+       sc_id : '',
        open_sc_form : false,
        loading_open_form: false,
        get_sales_contract_data: '',
@@ -729,6 +731,7 @@ export default {
   computed: {
       form_sc(){
         const form = {
+           sc_id : this.sc_id,
            date : this.date,
            customer : this.customer,
            customer_json : JSON.stringify(this.customer),
@@ -781,6 +784,9 @@ export default {
     }
   },
   methods: {
+      convert_rupiah(value){
+        return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+      },
       clear_form(){
           this.date = this.$moment().format('YYYY-MM-DD');;
           this.customer = {
@@ -790,34 +796,28 @@ export default {
             alamat_pengambilan:'',
             customer_id:'',
           };
-          this.products = [{
-            jenis_barang: '',
-            code_coil: '',
-            qty: 1,
-            total_mtr:'',
-            harga_rp: '',
-            harga: '',
-            total_rp: '',
-            total: '',
-          }],      
+          this.products = [],      
           this.grand_total = '';
           this.grand_total_qty = '';
-          this.ongkir = '';
+          this.ongkir = 0;
           this.sales_contract_no = '';
           this.customer.customer_id = '';
+          this.error_simpan = '';
       },
       async open_form_page(){
+        this.sc_id = '';
         this.loading_open_form = true;
         await this.wait(1000);
         this.open_sc_form = true;
         this.loading_open_form = false
       },
       async close_form_page(){
-        this.clear_form();
+        this.sc_id = '';
         this.loading_open_form = true;
         await this.wait(1000);
         this.open_sc_form = false;
         this.loading_open_form = false
+        this.clear_form();
       },
       show_dialog_delete(id){
         this.dialog_delete_sc = true;
@@ -898,13 +898,18 @@ export default {
             this.loading_sc = false;
           })
       },  
-      show_sales_contract(id) {
-          this.open_sc_form = true;
-          this.loading_open_form = true;
+      show_sales_contract(id , action) {
+        return new Promise( resolve => {
+          this.clear_form();
+          if (action == 'edit'){
+            this.open_sc_form = true;
+            this.loading_open_form = true;
+          }
           this.$axios.get('/sales_contract/'+id)
           .then(response => {
-            console.log(response.data.data);
+            // console.log(response.data.data);
             var data = response.data.data;
+            this.sc_id = data.id;
             this.date = data.tanggal_sc;
             this.customer = {
               nama : data.customer.name,
@@ -913,30 +918,26 @@ export default {
               alamat_pengambilan:  data.alamat_pengambilan,
               customer_id:  data.customer.id
             };
-            this.products = [{
-              jenis_barang: '',
-              code_coil: '',
-              qty: 1,
-              total_mtr:'',
-              harga_rp: '',
-              harga: '',
-              total_rp: '',
-              total: '',
-            }],      
-            this.grand_total = data.total;
-            this.grand_total_qty = '';
+            //insert data product
+            data.item.forEach(x => {
+               x.harga_rp = this.convert_rupiah(x.harga);
+               x.total = x.qty * x.harga;
+               x.total_rp = this.convert_rupiah(x.total);
+               this.products.push(x);
+            });
             this.ongkir = data.ongkir;
             this.sales_contract_no = data.nomor_sc;
             this.customer.customer_id = data.customer.id;
-
-            
             this.loading_open_form = false;
+            resolve(true);
           })
           .catch(error => {
             console.log(error);
             this.loading_sc = false;
           })
-      },  
+        });
+      },
+        
       search_sales_contract() {
           // let addno = [];
           this.loading_sc = true;
@@ -996,7 +997,6 @@ export default {
           setTimeout(resolve, ms);
         });
       },
-
       async simpan(){
          await this.validate_customer();
 
@@ -1004,11 +1004,13 @@ export default {
            this.loading_simpan = true;
            this.sales_contract = this.$axios.post('/sales_contract', this.form_sc)
            .then(async response => {
-                console.log(response);
+                // console.log(response);
                 this.berhasil_simpan = true;
                 await this.wait(5000);
                 this.loading_simpan = false;
                 this.berhasil_simpan = false;
+                this.close_form_page();
+                this.search_sales_contract();
            })
            .catch(async error => {
                 console.log(error.response.status);
@@ -1017,27 +1019,61 @@ export default {
                 await this.wait(5000); 
                 this.loading_simpan = false;
                 this.gagal_simpan = false;
+                // this.close_form_page();
+                // this.search_sales_contract();
            });
          } else {
            this.$vuetify.goTo('#form_customer')
          }
       },
+      async update(){
+         await this.validate_customer();
 
-      async exportToPDF() {
-        const options = {
-          margin: [5, 5, 5, 5], // Set the margins of the PDF
-          filename: 'my-document.pdf', // Set the name of the PDF file
-          image: { type: 'jpeg', quality: 2 }, // Set the image quality of the PDF
-          html2canvas: { scale: 4 }, // Set the scale of the PDF
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Set the format and orientation of the PDF
-        };
-
-        const element = document.getElementById("cetak2");
-        
-        console.log('Running on a web');
-        this.html2pdf().set(options).from(element).save();
-        // do something for any other platform
-
+         if (this.valid_customer == true){
+           this.loading_simpan = true;
+           this.sales_contract = this.$axios.post('/sales_contract/update-sc/'+this.sc_id, this.form_sc)
+           .then(async response => {
+                // console.log(response);
+                this.berhasil_simpan = true;
+                await this.wait(5000);
+                this.loading_simpan = false;
+                this.berhasil_simpan = false;
+                this.close_form_page();
+                this.search_sales_contract();
+           })
+           .catch(async error => {
+                console.log(error.response.status);
+                this.gagal_simpan = true;
+                this.error_simpan = error.response;
+                await this.wait(5000); 
+                this.loading_simpan = false;
+                this.gagal_simpan = false;
+                // this.close_form_page();
+                // this.search_sales_contract();
+           });
+         } else {
+           this.$vuetify.goTo('#form_customer')
+         }
+      },
+      async exportToPDF(id) {
+        this.close_form_page();
+        let fetch_sc = await this.show_sales_contract(id, 'export');
+        if(fetch_sc){
+          console.log('telah fetch')
+          const options = {
+            margin: [5, 5, 5, 5], // Set the margins of the PDF
+            filename: 'my-document.pdf', // Set the name of the PDF file
+            image: { type: 'jpeg', quality: 2 }, // Set the image quality of the PDF
+            html2canvas: { scale: 4 }, // Set the scale of the PDF
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Set the format and orientation of the PDF
+          };
+  
+          const element = document.getElementById("cetak2");
+          
+          console.log('Running on a web');
+          this.html2pdf().set(options).from(element).save();
+          // do something for any other platform
+        }
       },
       AddProduct(){
          this.products.push(
