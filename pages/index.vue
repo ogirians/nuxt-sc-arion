@@ -518,15 +518,29 @@
               </template>
             </v-simple-table>
             <v-divider></v-divider>
-            <v-card-actions class="ml-5 mt-5 pb-0">
-               <h4>total contract : <span style="color:red">{{ sum_total }}</span> </h4>
-              </v-card-actions>
-            <v-card-actions class="ml-5 pt-0 pb-0">
-              <h5 class="">ongkos kirim : <span>{{ ongkir | rupiah}}</span> </h5>
-            </v-card-actions>
-            <v-card-actions class="ml-5 pt-0">
-              <h5 class="mb-5">total qty : <span>{{ sum_qty }} kg</span> </h5>
-            </v-card-actions>
+            <table class="ma-5">
+              <tr>
+                <td style="min-width: 150px;">Ongkos Kirim</td>
+                <td>: {{ongkir | rupiah}}</td>
+              </tr>
+              <tr>
+                <td>Total qty</td>
+                <td>: {{sum_qty}} kg</td>
+              </tr>
+              <tr>
+                <tr>
+                  <td>Dpp</td>
+                  <td>: {{dpp}}</td>
+                </tr>
+                <tr>
+                  <td>Ppn</td>
+                  <td>: {{ppn}}</td>
+                </tr>
+                <td>Total Contract</td>
+                <td>: <span style="color: red;"> {{sum_total}}</span></td>
+              </tr>
+            </table>
+            
             <v-overlay
                 :absolute="false"
                 :value="isAddingOngkir"
@@ -582,7 +596,7 @@
     </v-card>
 
    
-    <div class="d-none" id="cetak2">
+    <div class="" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
     </div>
     <v-overlay v-model="loading_simpan">
@@ -746,6 +760,16 @@ export default {
         }
         return form;
      },
+     dpp(){
+      let result = this.grand_total / 1.11;
+      return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(result);
+      //  return this.grand_total / 1.11 ;
+     },
+     ppn(){
+      let dpp = this.grand_total / 1.11;
+      let result = (dpp * 11) / 100;
+      return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(result);
+     },
      sum_total(){
         this.grand_total = 0
         if(this.products.length > 0){
@@ -781,6 +805,9 @@ export default {
   filters : {
     rupiah(value){
       return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+    },
+    tanggal_id(value){
+      return this.$moment(value).format('DD-MM-YYYY');
     }
   },
   methods: {

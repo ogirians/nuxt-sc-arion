@@ -1,17 +1,35 @@
 <template>
     <div id="halaman_cetak">
-        <div style="text-align: center; margin: auto; width: 75%;">
-            <b>CV. ARION PANCA SEKAWAN</b><br>
-            <b>
-                PEKARUNGAN RT.011/004 PEKARUNGAN SUKODONO - SIDOARJO<br>
-            </b>
-            <b>
-                Email: arionpancasekawan@gmail.com<br>
-            </b>
-            <b>
-                Web : www.arionpancasekawan.com
-            </b>
-        </div>
+       
+        <table style="text-align: center; margin: auto; width: 100%;" >
+            <tr>
+                <td style="width: 20%;"> 
+                    <img
+                    src="/arion.jpg"
+                    alt="arion"
+                    class="mt-5"
+                    height="100px"
+                    
+                    > 
+                </td>
+                <td style="width: 60%;">
+                    <div>
+                        <b>CV. ARION PANCA SEKAWAN</b><br>
+                        <b>
+                            PEKARUNGAN RT.011/004 PEKARUNGAN SUKODONO - SIDOARJO<br>
+                        </b>
+                        <b>
+                            Email: arionpancasekawan@gmail.com<br>
+                        </b>
+                        <b>
+                            Web : www.arionpancasekawan.com
+                        </b>
+                    </div>
+                </td>
+                <td style="width: 20%;"></td>
+            </tr>
+        </table>
+        
         <br>
         <v-divider></v-divider>
         <br>
@@ -23,33 +41,43 @@
                {{ form.sales_contract_no}}<br><br>
         </div>
         <div style="margin-top: 10px;">
-            <table>
-                <tr>
-                    <td style="margin-right : 10px">TANGGAL</td>
-                    <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.date }}</td>
-                </tr>
-                <tr>
-                    <td style="margin-right : 10px">ALAMAT PENGAMBILAN</td>
-                    <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.customer.alamat_pengambilan }}</td>
-                </tr>
-                <tr>
-                    <td style="margin-right : 10px"> CUSTOMER</td>
-                    <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.customer.nama }}</td>
-                </tr>
-                <tr>
-                    <td style="margin-right : 10px">NPWP</td>
-                    <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.customer.npwp }}</td>
-                </tr>
-                <tr>
-                    <td style="margin-right : 10px">ALAMAT</td>
-                    <td>&nbsp;&nbsp;:&nbsp;</td>
-                    <td>{{ form.customer.alamat }}</td>
-                </tr>
-            </table>
+            <div style="display:flex">
+                <table style="width: 70%;">
+                    <tr>
+                        <td style="margin-right : 10px;">TANGGAL</td>
+                        <td>&nbsp;&nbsp;:&nbsp;</td>
+                        <td style="min-width: 80%;">{{ form.date }}</td>
+                        <!-- <td style="margin-right : 10px">ALAMAT PENGAMBILAN</td>
+                        <td>&nbsp;&nbsp;:&nbsp;</td>
+                        <td>{{ form.customer.alamat_pengambilan }}</td> -->
+                    </tr>
+                    <tr>
+                        <td style="margin-right : 10px"> CUSTOMER</td>
+                        <td>&nbsp;&nbsp;:&nbsp;</td>
+                        <td>{{ form.customer.nama }}</td>
+                    </tr>
+                    <tr>
+                        <td style="margin-right : 10px">NPWP</td>
+                        <td>&nbsp;&nbsp;:&nbsp;</td>
+                        <td>{{ form.customer.npwp }}</td>
+                    </tr>
+                    <tr>
+                        <td style="margin-right : 10px">ALAMAT</td>
+                        <td>&nbsp;&nbsp;:&nbsp;</td>
+                        <td>{{ form.customer.alamat }}</td>
+                    </tr>
+                </table>
+                <table style="width: 30%;">
+                    <tr style="height: 20%;">
+                        <td style="margin-right : 10px; vertical-align:top;">ALAMAT PENGAMBILAN :</td>
+                        <!-- <td>&nbsp;&nbsp;:&nbsp;</td> -->
+                        
+                    </tr>
+                    <tr>
+                        <td style="vertical-align:top; word-wrap: break-word;">{{ form.customer.alamat_pengambilan }}</td>
+                    </tr>
+                </table>
+            </div>
                 <!-- TANGGAL : {{ form.date }}<br>
                 ALAMAT PENGAMBILAN : {{ form.customer.alamat_pengiriman }}<br>
                 CUSTOMER : {{ form.customer.nama }}<br>
@@ -150,7 +178,11 @@
             </tr>  
             <tr>
                 <td></td>
-                <td><b>Pembayaran DIANGGAP SAH JIKA DANA SUDAH MASUK KE REKENING</b></td>
+                <td>Pembayaran DIANGGAP SAH JIKA DANA SUDAH MASUK KE REKENING</td>
+            </tr>  
+            <tr>
+                <td></td>
+                <td>Biaya transfer perbankan sepenuhnya tanggung jawab customer</td>
             </tr>  
             <tr>
                 <td></td>
@@ -177,6 +209,18 @@
                 <td> Jika Sales Contract disetujui, mohon ditandatangani dan dikirim kembali</td>
             </tr>  
             <tr>
+                <td>VI</td>
+                <td>Barang yang tidak diambil lebih dari 2 minggu setelah tanggal kontrak akan dikenakan biaya gudang</td>
+            </tr>  
+            <tr>
+                <td>VII</td>
+                <td>Truk pengambilan coil harus sesuai dengan standar keamanan</td>
+            </tr>  
+            <tr>
+                <td>VIII</td>
+                <td>Mohon membawa palet demi keamanan coil</td>
+            </tr>  
+            <tr>
                 <td>Note</td>
                 <td>Harap SC ini diperiksa terlebih dahulu, bila terjadi kesalahan dalam pemesanan & SC udah di ACC pihak customer maka pihak CV.ARION PANCA SEKWAN tidak bertanggung jawab.</td>
             </tr>  
@@ -184,7 +228,7 @@
         <br>
         <table id="ttd">
             <tr>
-                <td>Hormat saya</td>
+                <td>Hormat Kami</td>
                 <td>Disetujui Oleh</td>
             </tr>
             <tr>
@@ -213,8 +257,11 @@ export default{
     filters : {
     rupiah(value){
       return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+    },
+    tanggal_id(value){
+      return this.$moment(value).format('DD-MM-YYYY');
     }
-  },
+    },
 }
 </script>
 
