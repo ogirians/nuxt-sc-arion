@@ -134,6 +134,9 @@
           <template v-slot:item.total="{ item }">
             {{ item.total | rupiah }}
           </template>
+          <template v-slot:item.tanggal_sc="{ item }">
+            {{ item.tanggal_sc | tanggal_id }}
+          </template>
         
         </v-data-table>
         </v-card>
@@ -596,7 +599,7 @@
     </v-card>
 
    
-    <div class="" id="cetak2">
+    <div class="d-none" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" />
     </div>
     <v-overlay v-model="loading_simpan">
@@ -639,6 +642,7 @@
 
 <script>
 // import html2pdf from "html2pdf.js";
+import moment from 'moment';
 
 export default {
   name: 'IndexPage',
@@ -652,6 +656,7 @@ export default {
   },
   data(){
     return {
+       moment : moment,
        headers_sc : [
         {
             text: 'No',
@@ -807,7 +812,8 @@ export default {
       return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
     },
     tanggal_id(value){
-      return this.$moment(value).format('DD-MM-YYYY');
+      let date_id = moment(value).format('DD-MM-YYYY');
+      return  date_id;
     }
   },
   methods: {

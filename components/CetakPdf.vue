@@ -46,7 +46,7 @@
                     <tr>
                         <td style="margin-right : 10px;">TANGGAL</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
-                        <td style="min-width: 80%;">{{ form.date }}</td>
+                        <td style="min-width: 80%;">{{ form.date | tanggal_id }}</td>
                         <!-- <td style="margin-right : 10px">ALAMAT PENGAMBILAN</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
                         <td>{{ form.customer.alamat_pengambilan }}</td> -->
@@ -240,6 +240,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 export default{
     props: {
         form_sc_prop : ''
@@ -255,12 +256,13 @@ export default{
         }
     },
     filters : {
-    rupiah(value){
-      return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
-    },
-    tanggal_id(value){
-      return this.$moment(value).format('DD-MM-YYYY');
-    }
+        rupiah(value){
+        return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+        },
+        tanggal_id(value){
+        let date_id = moment(value).format('DD-MM-YYYY');
+        return  date_id;
+        }
     },
 }
 </script>
