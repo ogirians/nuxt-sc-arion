@@ -232,8 +232,17 @@
                 <td>Disetujui Oleh</td>
             </tr>
             <tr>
-                <td style="padding-top:50px">CV. ARION PANCA SEKAWAN</td>
-                <td style="padding-top:50px">Customer</td>
+                <td>
+                    <div style="position: relative; display: inline-block;">
+                        <img src="/ttd_arion.png" height="60x" style="position: absolute; z-index: 2;  top: 50%; left: 10%; transform: translate(-50%, -50%);">
+                        <img src="/stamp_arion.png" height="120px">
+                    </div>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CV. ARION PANCA SEKAWAN</td>
+                <td>Customer</td>
             </tr>
         </table>
     </div>
