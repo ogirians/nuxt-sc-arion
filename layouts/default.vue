@@ -62,6 +62,11 @@ export default {
           to: '/'
         },
         {
+          icon: 'mdi-apps',
+          title: 'generate Invoice',
+          to: '/invoice'
+        },
+        {
           icon: 'mdi-chart-bubble',
           title: 'generate lain-lain',
           to: '/inspire'
