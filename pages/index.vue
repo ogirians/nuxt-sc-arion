@@ -3,7 +3,7 @@
     <v-card class="logo" color="primary" elevation="5">
         <v-card-title>
             <span style="color:white" class="mr-5"> 
-              RIWAYAT
+              RIWAYAT SC
             </span>
             <v-spacer></v-spacer>
             <v-btn small rounded color="success" class="mr-3" @click="open_form_page()">
