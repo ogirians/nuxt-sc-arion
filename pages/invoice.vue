@@ -17,7 +17,17 @@
         <v-card outlined>
           <v-data-table
             :headers="headers_sc"
-            :items="items_sc"
+            :items="item_invoice"            
+            loading-text="loading data"
+            :loading="loading_invoice"
+            :items-per-page="pagination.itemsPerPage"
+            :page="pagination.page"
+            :server-items-length="pagination.itemsLength"
+            @pagination="handlePagination"
+            :footer-props="{
+              'items-per-page-options':[5],
+              'disable-items-per-page': true,
+            }"
           >
           <!-- :mobile-breakpoint="0"  to disbale vertical row -->
           <template v-slot:top="{ item }">
@@ -121,14 +131,14 @@
               mdi-delete
             </v-icon>
           </template>
-          <template v-slot:item.total="{ item }">
-            {{ item.total | rupiah }}
+          <template v-slot:item.sales_contract.total ="{ item }">
+            {{ item.sales_contract.total | rupiah }}
           </template>
-          <template v-slot:item.tanggal_sc="{ item }">
-            {{ item.tanggal_sc | tanggal_id }}
+          <template v-slot:item.tanggal_invoice="{ item }">
+            {{ item.tanggal_invoice | tanggal_id }}
           </template>
         
-        </v-data-table>
+          </v-data-table>
         </v-card>
       </v-container>    
     </v-card>      
@@ -136,47 +146,116 @@
 </template>
 
 <script>
+import moment from 'moment';
+
     export default {
-        data (){
-            return {
-                headers_sc : [
-                    {
-                        text: 'No',
-                        align: 'start',
-                        sortable: false,
-                        value: 'no',
-                    },
-                    {
-                        text: 'No sales contract',
-                        align: 'start',
-                        sortable: false,
-                        value: 'nomor_sc',
-                    },
-                    {
-                        text: 'Nama Customoer',
-                        align: 'start',
-                        sortable: false,
-                        value: 'customer.name',
-                    },
-                    {
-                        text: 'Tanggal Contract',
-                        align: 'start',
-                        sortable: false,
-                        value: 'tanggal_sc',
-                    },
-                    {
-                        text: 'total contract',
-                        align: 'start',
-                        sortable: false,
-                        value: 'total',
-                    },
-                    { text: 'Actions', value: 'actions', sortable: false },
-                ],
-                items_sc : [],
-                search_sc : '',       
-                date_sc : '',
-                modal2 : false,
+        mounted(){
+          this.get_invoice();
+        },
+        data(){
+          return {
+              loading_invoice : false,
+              pagination: {
+                    page: 1, // Current page
+                    itemsPerPage: 5,
+                    itemsLength:0, // Number of items per page
+                  },
+              headers_sc : [
+                  {
+                      text: 'No',
+                      align: 'start',
+                      sortable: false,
+                      value: 'no',
+                  },
+                  {
+                      text: 'No sales contract',
+                      align: 'start',
+                      sortable: false,
+                      value: 'sales_contract.nomor_sc',
+                  },
+                  {
+                      text: 'Nama Customoer',
+                      align: 'start',
+                      sortable: false,
+                      value: 'sales_contract.customer.name',
+                  },
+                  {
+                      text: 'Tanggal Invoice',
+                      align: 'start',
+                      sortable: false,
+                      value: 'tanggal_invoice',
+                  },
+                  {
+                      text: 'total contract',
+                      align: 'start',
+                      sortable: false,
+                      value: 'sales_contract.total',
+                  },
+                  { text: 'Actions', value: 'actions', sortable: false },
+              ],
+              search_sc : '',       
+              date_sc : '',
+              modal2 : false,
+              item_invoice : [],
+          }
+        },
+        methods :  {
+          handlePagination(pagination) {
+            if(this.pagination.page != pagination.page){
+              this.loading_invoice = true;
+              this.pagination.page = pagination.page;             
+              this.items_invoice = [];
+              console.log(pagination)
+              this.$axios.get('/invoice?page='+pagination.page)
+              .then(response => {
+                  // console.log(response);
+                  response.data.data.data.forEach((x ,index) => {
+                      if(index == 0){
+                        x.no = response.data.data.from ;
+                      }else{
+                        x.no = response.data.data.from + index ;
+                      }
+                      this.item_invoice.push(x);
+                  })
+                  this.pagination.itemsLength = response.data.data.total
+                  this.loading_sc = false;
+                })
+                .catch(error => {
+                  console.log(error);
+                  this.loading_invoice= false;
+                })
             }
-        }
-    }
+          },
+          get_invoice(){
+            this.loading_invoice = true;
+            this.$axios.get('/invoice')
+            .then(response => {
+              response.data.data.data.forEach((x ,index) => {
+                if(index == 0){
+                  x.no = response.data.data.from ;
+                }else{
+                  x.no = response.data.data.from + index ;
+                }
+                this.item_invoice.push(x);
+              })
+              this.pagination.itemsLength = response.data.data.total
+              this.loading_invoice= false;
+            })
+            .catch(error => {
+              console.log(error);
+              this.loading_sc = false;
+            })
+          }
+        },
+        filters : {
+          rupiah(value){
+            return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+          },
+          tanggal_id(value){
+            let date_id = moment(value).format('DD-MM-YYYY');
+            return  date_id;
+          }
+        },
+      }
+    
 </script>

@@ -21,8 +21,8 @@
             :items-per-page="pagination.itemsPerPage"
             :page="pagination.page"
             :server-items-length="pagination.itemsLength"
-            :loading="loading_sc"
             loading-text="loading data"
+            :loading="loading_sc"
             @pagination="handlePagination"
             :footer-props="{
               'items-per-page-options':[5],
@@ -105,6 +105,25 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
+          </template>
+           <template v-slot:item.invoiced="{ item }">
+
+            <v-icon
+              v-if="item.invoiced == 1"
+              small
+              class="mr-2"
+              color="success"
+            >
+              mdi-checkbox-outline
+            </v-icon>
+             <v-icon
+              v-if="item.invoiced == 0"
+              small
+              class="mr-2"
+              color="error"
+            >
+              mdi-close-box-outline
+            </v-icon>
           </template>
           <template v-slot:item.actions="{ item }">
             <v-icon
@@ -687,6 +706,12 @@ export default {
             align: 'start',
             sortable: false,
             value: 'total',
+        },
+        {
+            text: 'invoiced',
+            align: 'center',
+            sortable: false,
+            value: 'invoiced',
         },
         { text: 'Actions', value: 'actions', sortable: false },
        ],
