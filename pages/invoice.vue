@@ -47,13 +47,13 @@
                 <v-dialog
                   ref="dialog2"
                   v-model="modal2"
-                  :return-value.sync="date_sc"
+                  :return-value.sync="date_invoice_search"
                   persistent
                   width="290px"
                 >
                   <template v-slot:activator="{ on, attrs2 }">
                     <v-text-field            
-                      v-model="date_sc"
+                      v-model="date_invoice_search"
                       label="tanggal_sc"
                       prepend-inner-icon="mdi-calendar"
                       readonly
@@ -66,7 +66,7 @@
                     ></v-text-field>
                   </template>
                   <v-date-picker
-                    v-model="date_sc"
+                    v-model="date_invoice_search"
                     scrollable          
                   >
                     <v-spacer></v-spacer>
@@ -80,7 +80,7 @@
                     <v-btn
                       text
                       color="primary"
-                      @click="$refs.dialog2.save(date_sc)"
+                      @click="$refs.dialog2.save(date_invoice_search)"
                     >
                       OK
                     </v-btn>
@@ -88,7 +88,7 @@
               </v-dialog>
               </v-col>
               <v-col cols="12" md="4" class="py-0 mb-3">
-                <v-btn @click="search_sales_contract()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
+                <v-btn @click="search_invoice_func()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
                   cari
                 </v-btn>
               </v-col>
@@ -115,14 +115,14 @@
             >
               mdi-file-pdf-box
             </v-icon>
-            <v-icon
+            <!-- <v-icon
               small
               class="mr-2"
               color="success"
               @click="show_invoice(item.id)"
             >
               mdi-pencil
-            </v-icon>
+            </v-icon> -->
             <v-icon
               small
               color="error"
@@ -140,6 +140,9 @@
         
           </v-data-table>
         </v-card>
+        <div class="" id="cetak2">
+          <CetakPdf :form_sc_prop = "form_sc" />
+        </div>
         <v-overlay
           :absolute="false"
           :value="isAddingInvoice"
@@ -298,6 +301,21 @@ import moment from 'moment';
         },
         data(){
           return {
+              form_sc : {
+                sc_id             : '',
+                date              : '',
+                customer          : '',
+                customer_json     : '',
+                products          : '',
+                products_json     : '',
+                grand_total_rp    : '',
+                grand_total_qty   : '',
+                grand_total       : '',
+                ongkir            : '',
+                sales_contract_no : '',
+                customer_id       : '',
+              },
+              date_invoice_search : '',
               invoice_id_toupdate : '',
               noscToUpdate: '',
               showInvoiceData : '',             
@@ -349,7 +367,7 @@ import moment from 'moment';
                   },
                   { text: 'Actions', value: 'actions', sortable: false },
               ],
-              search_sc : '',       
+              search_sc : '',                     
               date_invoice : '',
               date_sc : '',
               modal2 : false,
@@ -368,6 +386,9 @@ import moment from 'moment';
           },
         },  
         methods :  {
+          exportToPDF(id){
+             this.show_invoice(id);
+          },
           show_dialog_delete(id){
             this.dialog_delete_invoice = true;
             this.invoice_id_todelete = id;
@@ -376,7 +397,7 @@ import moment from 'moment';
             if(this.pagination.page != pagination.page){
               this.loading_invoice = true;
               this.pagination.page = pagination.page;             
-              this.items_invoice = [];
+              this.item_invoice = [];
               console.log(pagination)
               this.$axios.get('/invoice?page='+pagination.page)
               .then(response => {
@@ -443,6 +464,27 @@ import moment from 'moment';
               console.log(error);              
             })
           },
+          search_invoice_func() {       
+            this.loading_invoice = true;             
+            this.item_invoice = [];
+
+            this.$axios.post('/invoice/search-invoice', {search_invoice : this.search_invoice, date_sc : this.date_invoice_search})
+            .then(response => {
+              // console.log(response);
+              response.data.data.data.forEach((x ,index) => {
+                  if(index == 0){
+                    x.no = response.data.data.from ;
+                  }else{
+                    x.no = response.data.data.from + index ;
+                  }                  
+                  this.item_invoice.push(x);                  
+              })
+              this.loading_invoice = false;
+            })
+            .catch(error => {
+              console.log(error);              
+            })
+          },
           simpan_invoice() {
             this.loading_simpan = true;
             this.$axios.post('/invoice', this.form_invoice)
@@ -473,22 +515,52 @@ import moment from 'moment';
               console.log('gagal')
             })
           },
-          show_invoice(id){
-            this.isAddingInvoice = true;
-            this.isEditingInvoice = true;
-            this.invoice_id_toupdate = id;
-            let invoice = this.item_invoice.find(x => x.id === id);
-            this.noscToUpdate = invoice.sales_contract.nomor_sc;
-            // this.$axios.get('/invoice/'+id)
-            // .then(response => {
-              // this.form_invoice   
-              // this.showInvoiceData = response.data;   
-              // this.noscToUpdate = response.data.data.sales_contract.nomor_sc;     
-            //   console.log(response);
-            // })
-            // .catch(error => {
-            //   console.log('gagal')
-            // })
+          show_invoice(id){                                            
+            let sales_contract = '';
+            let total_qty = '';
+            let customer = '';
+            let data_customer = '';
+            this.$axios.get('/invoice/'+id)
+            .then(response => {
+              sales_contract = response.data.data.sales_contract; 
+              customer = response.data.data.sales_contract.customer;
+              
+              data_customer = {
+                  nama                :  customer.name,
+                  npwp                :  customer.npwp,
+                  alamat              :  customer.alamat,
+                  alamat_pengambilan  :  sales_contract.alamat_pengambilan,
+                  customer_id         :  customer.id
+              };
+
+              if(sales_contract.item.length > 0){
+                total_qty = sales_contract.item.reduce((sum, item) => sum + item.qty, 0);
+                sales_contract.item.forEach(x => {
+                  x.harga_rp = this.convert_rupiah(x.harga);
+                  x.total = x.qty * x.harga;
+                  x.total_rp = this.convert_rupiah(x.total);                 
+                });
+              }
+              
+              console.log(sales_contract);
+                this.form_sc.sc_id             = sales_contract.id;
+                this.form_sc.date              = sales_contract.tangga_sc;
+                this.form_sc.customer          = data_customer;
+                this.form_sc.customer_json     = data_customer;
+                this.form_sc.products          = sales_contract.item;
+                this.form_sc.products_json     = sales_contract.item;
+                this.form_sc.grand_total_rp    = this.convert_rupiah(Number(sales_contract.total));
+                this.form_sc.grand_total_qty   = (total_qty);
+                this.form_sc.grand_total       = this.convert_rupiah(sales_contract.total);
+                this.form_sc.ongkir            = sales_contract.ongkir;
+                this.form_sc.sales_contract_no = sales_contract.nomor_sc;                     
+            })
+            .catch(error => {
+              console.log(error)
+            })
+          },
+          convert_rupiah(value){
+            return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
           },
           update_invoice(){
             this.loading_simpan = true;

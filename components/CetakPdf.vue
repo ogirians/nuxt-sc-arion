@@ -54,17 +54,17 @@
                     <tr>
                         <td style="margin-right : 10px"> CUSTOMER</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
-                        <td>{{ form.customer.nama }}</td>
+                        <td>{{ form.customer.nama ? form.customer.nama : '' }}</td>
                     </tr>
                     <tr>
                         <td style="margin-right : 10px">NPWP</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
-                        <td>{{ form.customer.npwp }}</td>
+                        <td>{{ form.customer.npwp ? form.customer.npwp : ''}}</td>
                     </tr>
                     <tr>
                         <td style="margin-right : 10px">ALAMAT</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
-                        <td>{{ form.customer.alamat }}</td>
+                        <td>{{ form.customer.alamat ? form.customer.alamat : ''}}</td>
                     </tr>
                 </table>
                 <table style="width: 30%;">
@@ -74,7 +74,7 @@
                         
                     </tr>
                     <tr>
-                        <td style="vertical-align:top; word-wrap: break-word;">{{ form.customer.alamat_pengambilan }}</td>
+                        <td style="vertical-align:top; word-wrap: break-word;">{{ form.customer.alamat_pengambilan ? form.customer.alamat_pengambilan : '' }}</td>
                     </tr>
                 </table>
             </div>
