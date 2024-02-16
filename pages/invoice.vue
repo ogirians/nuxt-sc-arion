@@ -111,7 +111,15 @@
               small
               class="mr-2"
               color="warning"
-              @click="exportToPDF(item.id)"
+              @click="exportToPDF(item.id, 'invoice')"
+            >
+              mdi-file-pdf-box
+            </v-icon>
+            <v-icon
+              small
+              class="mr-2"
+              color="info"
+              @click="exportToPDF(item.id, 'sj')"
             >
               mdi-file-pdf-box
             </v-icon>
@@ -140,8 +148,11 @@
         
           </v-data-table>
         </v-card>
-        <div class="" id="cetak2">
-          <CetakPdf :form_sc_prop = "form_sc" />
+        <div class="d-none" id="cetak2">
+          <CetakPdf 
+            :form_sc_prop = "form_sc" 
+            :mode ="mode"
+          />
         </div>
         <v-overlay
           :absolute="false"
@@ -296,11 +307,16 @@ import moment from 'moment';
 
     export default {
         mounted(){
+          this.html2pdf = require('html2pdf.js');
           this.get_invoice();
           // this.get_sales_contract();
         },
+        created(){
+          this.date_invoice = this.$moment().format('YYYY-MM-DD');
+        },
         data(){
           return {
+              mode : 'invoice',
               form_sc : {
                 sc_id             : '',
                 date              : '',
@@ -386,8 +402,32 @@ import moment from 'moment';
           },
         },  
         methods :  {
-          exportToPDF(id){
-             this.show_invoice(id);
+          async exportToPDF(id, doc){
+            
+            if (doc == 'sj'){
+              this.mode = 'sj'
+            } 
+            if (doc == 'invoice'){
+              this.mode = 'invoice'
+            } 
+
+            let fetch_invoice = await this.show_invoice(id);
+            if (fetch_invoice){
+                console.log('telah fetch')
+                const options = {
+                  margin: [5, 5, 5, 5], // Set the margins of the PDF
+                  filename: 'my-document.pdf', // Set the name of the PDF file
+                  image: { type: 'jpeg', quality: 2 }, // Set the image quality of the PDF
+                  html2canvas: { scale: 4 }, // Set the scale of the PDF
+                  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Set the format and orientation of the PDF
+                };
+        
+                const element = document.getElementById("cetak2");
+                
+                console.log('Running on a web');
+                this.html2pdf().set(options).from(element).save();
+                // do something for any other platform
+            }
           },
           show_dialog_delete(id){
             this.dialog_delete_invoice = true;
@@ -515,49 +555,53 @@ import moment from 'moment';
               console.log('gagal')
             })
           },
-          show_invoice(id){                                            
-            let sales_contract = '';
-            let total_qty = '';
-            let customer = '';
-            let data_customer = '';
-            this.$axios.get('/invoice/'+id)
-            .then(response => {
-              sales_contract = response.data.data.sales_contract; 
-              customer = response.data.data.sales_contract.customer;
-              
-              data_customer = {
-                  nama                :  customer.name,
-                  npwp                :  customer.npwp,
-                  alamat              :  customer.alamat,
-                  alamat_pengambilan  :  sales_contract.alamat_pengambilan,
-                  customer_id         :  customer.id
-              };
-
-              if(sales_contract.item.length > 0){
-                total_qty = sales_contract.item.reduce((sum, item) => sum + item.qty, 0);
-                sales_contract.item.forEach(x => {
-                  x.harga_rp = this.convert_rupiah(x.harga);
-                  x.total = x.qty * x.harga;
-                  x.total_rp = this.convert_rupiah(x.total);                 
-                });
-              }
-              
-              console.log(sales_contract);
-                this.form_sc.sc_id             = sales_contract.id;
-                this.form_sc.date              = sales_contract.tangga_sc;
-                this.form_sc.customer          = data_customer;
-                this.form_sc.customer_json     = data_customer;
-                this.form_sc.products          = sales_contract.item;
-                this.form_sc.products_json     = sales_contract.item;
-                this.form_sc.grand_total_rp    = this.convert_rupiah(Number(sales_contract.total));
-                this.form_sc.grand_total_qty   = (total_qty);
-                this.form_sc.grand_total       = this.convert_rupiah(sales_contract.total);
-                this.form_sc.ongkir            = sales_contract.ongkir;
-                this.form_sc.sales_contract_no = sales_contract.nomor_sc;                     
-            })
-            .catch(error => {
-              console.log(error)
-            })
+          show_invoice(id){    
+            return new Promise( resolve => {
+              let sales_contract = '';
+              let total_qty = '';
+              let customer = '';
+              let data_customer = '';
+              this.$axios.get('/invoice/'+id)
+              .then(response => {
+                sales_contract = response.data.data.sales_contract; 
+                customer = response.data.data.sales_contract.customer;
+                
+                data_customer = {
+                    nama                :  customer.name,
+                    npwp                :  customer.npwp,
+                    alamat              :  customer.alamat,
+                    alamat_pengambilan  :  sales_contract.alamat_pengambilan,
+                    customer_id         :  customer.id
+                };
+  
+                if(sales_contract.item.length > 0){
+                  total_qty = sales_contract.item.reduce((sum, item) => sum + item.qty, 0);
+                  sales_contract.item.forEach(x => {
+                    x.harga_rp = this.convert_rupiah(x.harga);
+                    x.total = x.qty * x.harga;
+                    x.total_rp = this.convert_rupiah(x.total);                 
+                  });
+                }
+                
+                console.log(sales_contract);
+                  this.form_sc.sc_id             = sales_contract.id;
+                  this.form_sc.date              = sales_contract.tangga_sc;
+                  this.form_sc.customer          = data_customer;
+                  this.form_sc.customer_json     = data_customer;
+                  this.form_sc.products          = sales_contract.item;
+                  this.form_sc.products_json     = sales_contract.item;
+                  this.form_sc.grand_total_rp    = this.convert_rupiah(Number(sales_contract.total));
+                  this.form_sc.grand_total_qty   = (total_qty);
+                  this.form_sc.grand_total       = sales_contract.total;
+                  this.form_sc.ongkir            = sales_contract.ongkir;
+                  this.form_sc.sales_contract_no = sales_contract.nomor_sc;    
+                  resolve(true);                 
+              })
+              .catch(error => {
+                console.log(error)
+                resolve(false);
+              })
+            });                                        
           },
           convert_rupiah(value){
             return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)

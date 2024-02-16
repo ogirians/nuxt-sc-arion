@@ -174,7 +174,7 @@
             </v-btn>
         </v-card-title>
     </v-card>    
-    <v-card elevation="5" :loading="loading_open_form">
+    <v-card id="tambah_sc" elevation="5" :loading="loading_open_form">
       <v-container>
         <div v-if="open_sc_form == true">
           <v-card class="logo mt-5" color="secondary">
@@ -619,7 +619,7 @@
 
    
     <div class="d-none" id="cetak2">
-      <CetakPdf :form_sc_prop = "form_sc" />
+      <CetakPdf :form_sc_prop = "form_sc" :mode="mode"/>
     </div>
     <v-overlay v-model="loading_simpan">
       <v-progress-circular
@@ -675,6 +675,7 @@ export default {
   },
   data(){
     return {
+       mode: 'sc',
        moment : moment,
        headers_sc : [
         {
@@ -869,6 +870,7 @@ export default {
         await this.wait(1000);
         this.open_sc_form = true;
         this.loading_open_form = false
+        this.$vuetify.goTo('#tambah_sc')
       },
       async close_form_page(){
         this.sc_id = '';
@@ -993,6 +995,7 @@ export default {
           .catch(error => {
             console.log(error);
             this.loading_sc = false;
+            resolve(false);
           })
         });
       },
@@ -1101,6 +1104,7 @@ export default {
                 this.search_sales_contract();
            })
            .catch(async error => {
+
                 console.log(error.response.status);
                 this.gagal_simpan = true;
                 this.error_simpan = error.response;

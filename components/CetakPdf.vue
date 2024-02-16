@@ -35,10 +35,16 @@
         <br>
         
         <div style="text-align: center; margin: auto; width: 75%;">
-               <b>SALES CONTRACT</b>
+               <b v-if="mode_cetak == 'sc'">SALES CONTRACT</b>
+               <b v-if="mode_cetak == 'invoice'">INVOICE</b>
+               <b v-if="mode_cetak == 'sj'">SURAT JALAN</b>
+
         </div>
-        <div style="text-align: center; margin: auto; width: 75%;">
+        <div v-if="mode == 'invoice'" style="text-align: center; margin: auto; width: 75%;">
                {{ form.sales_contract_no}}<br><br>
+        </div>
+        <div v-if="mode == 'sj'" style="text-align: center; margin: auto; width: 75%;">
+               {{ nomor_sj }}<br><br>
         </div>
         <div style="margin-top: 10px;">
             <div style="display:flex">
@@ -56,7 +62,7 @@
                         <td>&nbsp;&nbsp;:&nbsp;</td>
                         <td>{{ form.customer.nama ? form.customer.nama : '' }}</td>
                     </tr>
-                    <tr>
+                    <tr v-if="mode != 'sj'">
                         <td style="margin-right : 10px">NPWP</td>
                         <td>&nbsp;&nbsp;:&nbsp;</td>
                         <td>{{ form.customer.npwp ? form.customer.npwp : ''}}</td>
@@ -68,14 +74,16 @@
                     </tr>
                 </table>
                 <table style="width: 30%;">
-                    <tr style="height: 20%;">
-                        <td style="margin-right : 10px; vertical-align:top;">ALAMAT PENGAMBILAN :</td>
-                        <!-- <td>&nbsp;&nbsp;:&nbsp;</td> -->
-                        
-                    </tr>
-                    <tr>
-                        <td style="vertical-align:top; word-wrap: break-word;">{{ form.customer.alamat_pengambilan ? form.customer.alamat_pengambilan : '' }}</td>
-                    </tr>
+                    <div  v-if="mode_cetak == 'sc'">
+                        <tr style="height: 20%;">
+                            <td style="margin-right : 10px; vertical-align:top;">ALAMAT PENGAMBILAN :</td>
+                            <!-- <td>&nbsp;&nbsp;:&nbsp;</td> -->
+                            
+                        </tr>
+                        <tr>
+                            <td style="vertical-align:top; word-wrap: break-word;">{{ form.customer.alamat_pengambilan ? form.customer.alamat_pengambilan : '' }}</td>
+                        </tr>
+                    </div>
                 </table>
             </div>
                 <!-- TANGGAL : {{ form.date }}<br>
@@ -104,10 +112,10 @@
                     <th style="max-width: 100px;">
                     <b>TOTAL (Mtr)</b>
                     </th>
-                    <th style="max-width: 100px;">
+                    <th v-if = "mode_cetak != 'sj'" style="max-width: 100px;">
                     <b>HARGA</b>
                     </th>
-                    <th style="max-width: 150px;">
+                    <th v-if = "mode_cetak != 'sj'" style="max-width: 150px;">
                     <b>TOTAL</b>
                     </th>
                 </tr>
@@ -131,32 +139,52 @@
                         <td style="max-width: 100px;">
                             {{ item.total_mtr }}
                         </td>              
-                        <td style="max-width: 100px;">
+                        <td v-if = "mode_cetak != 'sj'" style="max-width: 100px;">
                             {{ item.harga_rp }}
                         </td>              
-                        <td style="max-width: 150px;">
+                        <td v-if = "mode_cetak != 'sj'" style="max-width: 150px;">
                             {{ item.total_rp }}
                         </td>              
                     </tr>
                     <tr>
-                        <td></td>
-                        <td colspan="4" style="text-align: center">ONGKIR</td>
-                        <td>{{ form.ongkir | rupiah }}</td>
-                        <td>{{ form.ongkir | rupiah }}</td>
+                        <td v-if = "mode_cetak != 'sj'"></td>
+                        <td v-if = "mode_cetak != 'sj'" colspan="4" style="text-align: center">ONGKIR</td>
+                        <td v-if = "mode_cetak != 'sj'">{{ form.ongkir | rupiah }}</td>
+                        <td v-if = "mode_cetak != 'sj'">{{ form.ongkir | rupiah }}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="text-align: center"><b>TOTAL</b></td>
+                        <td  colspan="3" style="text-align: center"><b>TOTAL</b></td>
                         <td>{{ form.grand_total_qty }}</td>
-                        <td></td>
-                        <td></td>
-                        <td>{{ form.grand_total_rp }}</td>
+                        <td ></td>
+                        <td v-if = "mode_cetak != 'sj'"></td>
+                        <td v-if = "mode_cetak != 'sj'">{{ form.grand_total_rp }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <br>
-        <br>
-        <table id="condition">
+        <br v-if="mode_cetak == 'sc'">
+        <table v-if="mode_cetak == 'invoice'" id="invoiceInfo">
+            <tr>
+                <td>* Barang yang sudah di beli tidak bisa di retur</td>
+                <td class="harga"><b>TOTAL HARGA</b></td>
+                <td style="width: 20%;"> : <b>{{ form.grand_total_rp }}</b></td>
+            </tr>
+            <tr>
+                <td><b>Pembayaran via bank</b></td>
+                <td class="harga"><b>DPP</b></td>
+                <td class="value"> : {{ dpp }}</td>
+            </tr>
+            <tr>
+                <td><b>BCA : 0877170822</b></td>
+                <td class="harga"><b>PPN</b></td>
+                <td class="value"> : {{ ppn }}</td>
+            </tr>
+            <tr>
+                <td><b>AN   : ARION PANCA SEKAWAN .CV</b></td>
+            </tr>
+        </table>
+        <table id="condition" v-if="mode_cetak == 'sc'">
             <tr>
                 <td colspan="2">CONTRACT CONDITION :</td>
             </tr>
@@ -226,25 +254,75 @@
             </tr>  
         </table>
         <br>
-        <table id="ttd">
-            <tr>
-                <td>Hormat Kami</td>
-                <td>Disetujui Oleh</td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="position: relative; display: inline-block;">
-                        <img src="/ttd_arion.png" height="60x" style="position: absolute; z-index: 2;  top: 50%; left: 10%; transform: translate(-50%, -50%);">
-                        <img src="/stamp_arion.png" height="120px">
-                    </div>
-                </td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>CV. ARION PANCA SEKAWAN</td>
-                <td>Customer</td>
-            </tr>
-        </table>
+        <div v-if="mode_cetak == 'sc'">
+            <table  id="ttd">
+                <tr>
+                    <td>Hormat Kami</td>
+                    <td>Disetujui Oleh</td>
+                </tr>
+                <tr>
+                    <td>
+                        <div style="position: relative; display: inline-block;">
+                            <img src="/ttd_arion.png" height="60x" style="position: absolute; z-index: 2;  top: 50%; left: 10%; transform: translate(-50%, -50%);">
+                            <img src="/stamp_arion.png" height="120px">
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>CV. ARION PANCA SEKAWAN</td>
+                    <td>Customer</td>
+                </tr>
+            </table>
+        </div>
+        <div v-if="mode_cetak =='invoice'">
+            <table  id="ttd">
+                <tr>
+                    <td></td>
+                    <td>Hormat kami</td>
+                </tr>
+                <tr>
+                    <td>
+                        
+                    </td>
+                    <td>
+                        <div style="position: relative; display: inline-block;">
+                            <img src="/ttd_arion.png" height="60x" style="position: absolute; z-index: 2;  top: 50%; left: 10%; transform: translate(-50%, -50%);">
+                            <img src="/stamp_arion.png" height="120px">
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>CV. ARION PANCA SEKAWAN</td>
+                </tr>
+            </table>
+        </div>
+        <div v-if="mode_cetak =='sj'">
+            <table id="sj_ttd">
+                <tr>
+                    <td>BAG GUDANG</td>
+                    <td>PENGIRIM</td>
+                    <td>PENERIMA</td>
+                </tr>
+                <tr style="height: 80px;">
+                    <td>
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td>_____________</td>
+                    <td>_____________</td>
+                    <td>_____________</td>
+                </tr>
+            </table>
+        </div>
     </div>
 </template>
 
@@ -252,7 +330,8 @@
 import moment from 'moment';
 export default{
     props: {
-        form_sc_prop : ''
+        form_sc_prop : '',
+        mode : ''
     },
     data() {
         return {
@@ -262,7 +341,27 @@ export default{
     computed : {
         form(){
             return this.form_sc_prop;
-        }
+        },
+        mode_cetak(){
+            return this.mode;
+        },
+        nomor_sj(){
+
+            if(this.form_sc_prop){
+                return this.form.sales_contract_no.replace("SC", "SJ");
+            }
+        },
+        dpp(){
+            let result = this.form.grand_total / 1.11;
+            return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(result);
+            //  return this.grand_total / 1.11 ;
+        },
+        ppn(){
+            let dpp = this.form.grand_total / 1.11;
+            let result = (dpp * 11) / 100;
+            return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(result);
+        },
+        
     },
     filters : {
         rupiah(value){
@@ -317,4 +416,33 @@ export default{
         max-width: 50%;      
         /* padding-top: 50px; */
     }
+  table#invoiceInfo {
+        width: 100%;
+        /* border :1px solid black; */
+        /* text-align: left; */
+        table-layout: fixed;
+    }
+
+    table#sj_ttd {
+        width: 100%;
+        /* border :1px solid black; */
+        text-align: center;
+        table-layout: fixed;
+    }
+
+    table#sj_ttd td{
+        max-width: 50%;      
+        /* padding-top: 50px; */
+        /* border :1px solid black; */
+    }
+
+  .harga {
+        /* width: 100%;
+        border :1px solid black; */
+        text-align: right;
+        /* table-layout: fixed; */
+    }
+
+
+    
 </style>
