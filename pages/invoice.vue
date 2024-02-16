@@ -575,7 +575,7 @@ import moment from 'moment';
                 };
   
                 if(sales_contract.item.length > 0){
-                  total_qty = sales_contract.item.reduce((sum, item) => sum + item.qty, 0);
+                  total_qty = sales_contract.item.reduce((sum, item) => sum + Number(item.qty), 0);
                   sales_contract.item.forEach(x => {
                     x.harga_rp = this.convert_rupiah(x.harga);
                     x.total = x.qty * x.harga;
@@ -591,7 +591,7 @@ import moment from 'moment';
                   this.form_sc.products          = sales_contract.item;
                   this.form_sc.products_json     = sales_contract.item;
                   this.form_sc.grand_total_rp    = this.convert_rupiah(Number(sales_contract.total));
-                  this.form_sc.grand_total_qty   = (total_qty);
+                  this.form_sc.grand_total_qty   = total_qty;
                   this.form_sc.grand_total       = sales_contract.total;
                   this.form_sc.ongkir            = sales_contract.ongkir;
                   this.form_sc.sales_contract_no = sales_contract.nomor_sc;    
