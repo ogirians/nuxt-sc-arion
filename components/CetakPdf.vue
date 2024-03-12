@@ -43,6 +43,9 @@
         <div v-if="mode == 'invoice'" style="text-align: center; margin: auto; width: 75%;">
                {{ form.sales_contract_no}}<br><br>
         </div>
+        <div v-if="mode == 'sc'" style="text-align: center; margin: auto; width: 75%;">
+               {{ form.sales_contract_no}}<br><br>
+        </div>
         <div v-if="mode == 'sj'" style="text-align: center; margin: auto; width: 75%;">
                {{ nomor_sj }}<br><br>
         </div>

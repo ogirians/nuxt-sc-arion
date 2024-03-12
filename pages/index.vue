@@ -965,6 +965,7 @@ export default {
           if (action == 'edit'){
             this.open_sc_form = true;
             this.loading_open_form = true;
+            this.$vuetify.goTo('#tambah_sc')
           }
           this.$axios.get('/sales_contract/'+id)
           .then(response => {
