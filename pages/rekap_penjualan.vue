@@ -71,9 +71,19 @@
                 :search="search"
                 :loading="loading_rekap"
                 >
-                <template v-slot:top="{ item }">
-                   
+                <template v-slot:item.total = "{ item }">
+                {{ item.total | rupiah }}
                 </template>
+                <template v-slot:item.dpp = "{ item }">
+                {{ item.dpp | rupiah }}
+                </template>
+                <template v-slot:item.ppn = "{ item }">
+                {{ item.ppn | rupiah }}
+                </template>
+                <template v-slot:item.tanggal_invoice="{ item }">
+                {{ item.tanggal_invoice | tanggal_id }}
+                </template>
+
                 
                 </v-data-table>
             </v-card>
@@ -108,33 +118,18 @@ import moment from 'moment';
                 value: 'name',
             },
             { text: 'Nomor Invoice', value: 'nomor_invoice' },
+            { text: 'Tanggal invoice', value: 'tanggal_invoice' },
             { text: 'Dpp', value: 'dpp' },
             { text: 'Ppn', value: 'ppn' },
             { text: 'Total', value: 'total' },
             ],
             list_rekap : [],
-            desserts: [
-            {
-                nama: 'Ogy',
-                nomor_invoice: 'XX/APS/XX/XX/20XX',
-                dpp: 'Rp 200.000',
-                ppn: 'Rp 2.000.000',
-                total : 'Rp 2.200.000',
-            },
-            {
-                nama: 'Wah',    
-                nomor_invoice: 'XX/APS/XX/XX/20XX',
-                dpp: 'Rp 200.000',
-                ppn: 'Rp 2.000.000',
-                total : 'Rp 2.200.000',
-            },
-            
-            ],
         }
         },
         computed: {
             dateRangeText () {
-                return this.dates.join(' ~ ')
+                // return this.dates.join(' ~ ')
+                return this.conver_tgl(this.tgl_awal) + ' ~ ' + this.conver_tgl(this.tgl_akhir)
             },
             tgl_awal() {
                 return this.dates[0]
@@ -158,6 +153,13 @@ import moment from 'moment';
                     console.log(error);
                     this.loading_rekap = false;
                 })
+            },
+            convert_rupiah(value){
+                return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+            },
+            conver_tgl(value){
+                let date_id = moment(value).format('DD-MM-YYYY');
+                return  date_id;
             },
             export_penjualan(){
                 // this.list_rekap = [];
@@ -188,7 +190,16 @@ import moment from 'moment';
                     this.loading_rekap = false;
                 })
             },
-        }
+        },
+        filters : {
+          rupiah(value){
+            return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+          },
+          tanggal_id(value){
+            let date_id = moment(value).format('DD-MM-YYYY');
+            return  date_id;
+          }
+        },
 
     }
 </script>
