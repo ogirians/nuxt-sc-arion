@@ -74,6 +74,11 @@ export default {
           to: '/invoice'
         },
         {
+          icon: 'mdi-apps',
+          title: 'Rekap penjualan',
+          to: '/rekap_penjualan'
+        },
+        {
           icon: 'mdi-chart-bubble',
           title: 'generate lain-lain',
           to: '/inspire'

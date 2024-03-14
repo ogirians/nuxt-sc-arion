@@ -600,7 +600,7 @@
           <!-- <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn> -->
           <v-btn v-if="this.sc_id == ''" @click="simpan()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>simpan</v-btn>
           <v-btn v-else @click="update()" class="success mt-5"><v-icon>mdi-content-save-outline</v-icon>Update</v-btn>
-        </div>
+          </div>
         </div>
         <div v-else>
            <v-card outlined>
@@ -1127,7 +1127,7 @@ export default {
           console.log('telah fetch')
           const options = {
             margin: [5, 5, 5, 5], // Set the margins of the PDF
-            filename: 'my-document.pdf', // Set the name of the PDF file
+            filename: this.customer.nama+'_'+this.$moment().format('YYYY-MM-DD'), // Set the name of the PDF file
             image: { type: 'jpeg', quality: 2 }, // Set the image quality of the PDF
             html2canvas: { scale: 4 }, // Set the scale of the PDF
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, // Set the format and orientation of the PDF
