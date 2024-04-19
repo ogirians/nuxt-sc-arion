@@ -130,7 +130,7 @@
               small
               class="mr-2"
               color="warning"
-              @click="exportToPDF(item.id)"
+              @click="exportToPDF_api(item.id)"
             >
               mdi-file-pdf-box
             </v-icon>
@@ -143,11 +143,19 @@
               mdi-pencil
             </v-icon>
             <v-icon
+              class="mr-2"
               small
               color="error"
               @click="show_dialog_delete(item.id)"
             >
               mdi-delete
+            </v-icon>
+            <v-icon
+              small
+              :color="(item.id == selected_sc) ? 'success' : 'secondary'"
+              @click="preview_func(item.id)"
+            >
+              mdi-eye
             </v-icon>
           </template>
           <template v-slot:item.total="{ item }">
@@ -618,7 +626,7 @@
     </v-card>
 
    
-    <div class="d-none" id="cetak2">
+    <div :class="(preview_pdf == true) ? '' : 'd-none'" id="cetak2">
       <CetakPdf :form_sc_prop = "form_sc" :mode="mode"/>
     </div>
     <v-overlay v-model="loading_simpan">
@@ -675,6 +683,8 @@ export default {
   },
   data(){
     return {
+       selected_sc : '',
+       preview_pdf : false,
        mode: 'sc',
        moment : moment,
        headers_sc : [
@@ -843,6 +853,7 @@ export default {
     }
   },
   methods: {
+      
       convert_rupiah(value){
         return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
       },
@@ -959,6 +970,18 @@ export default {
             this.loading_sc = false;
           })
       },  
+      async preview_func(id){
+        if (this.selected_sc == id){
+          this.preview_pdf = false
+          this.selected_sc = ''
+        }else{
+          this.preview_pdf = true;
+          await this.wait(1000);
+          this.$vuetify.goTo('#cetak2')
+          this.selected_sc = id;
+          this.show_sales_contract(id, 'export');
+        }
+      },
       show_sales_contract(id , action) {
         return new Promise( resolve => {
           this.clear_form();
@@ -1138,6 +1161,32 @@ export default {
           console.log('Running on a web');
           this.html2pdf().set(options).from(element).save();
           // do something for any other platform
+        }
+      },
+      async exportToPDF_api(id) {
+        this.close_form_page();
+        this.clear_form();
+        let fetch_sc = await this.show_sales_contract(id, 'export');
+        if(fetch_sc){
+          this.$axios.post('/download-pdf',{id : id, tipe : 'sc'},{ responseType: 'blob' })
+              .then(response => {                 
+                  // Create a Blob object from the response data
+                  const blob = new Blob([response.data], { type: 'application/pdf' });
+                  // Create a temporary URL for the Blob
+                  const url = window.URL.createObjectURL(blob);
+                  // Create a link element and simulate a click to trigger the download
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', 'sales_contract.pdf'); // Set the filename
+                  document.body.appendChild(link);
+                  link.click();
+                  // Cleanup
+                  window.URL.revokeObjectURL(url);
+              })
+              .catch(error => {
+                  console.log(error);
+                  this.loading_rekap = false;
+              })
         }
       },
       AddProduct(){

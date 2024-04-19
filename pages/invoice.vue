@@ -22,6 +22,8 @@
               :loading="loading_invoice"
               :items-per-page="pagination.itemsPerPage"
               :page="pagination.page"
+              @update:sort-by="handle_sortBy"
+              @update:sort-desc="handle_sortDesc"
               :server-items-length="pagination.itemsLength"
               @pagination="handlePagination"
               :footer-props="{
@@ -112,13 +114,13 @@
                 class="mr-2"
                 x-small
                 color="warning"
-                @click="exportToPDF(item.id, 'invoice')"
+                @click="exportToPDF_api(item.id, 'invoice')"
               >
                <v-icon
                 small
                 class="mr-2"
                 color="white"
-                @click="exportToPDF(item.id, 'invoice')"
+                
               >
                 mdi-file-pdf-box
               </v-icon>
@@ -129,13 +131,13 @@
                 class="mr-2"
                 x-small
                 color="info"
-                @click="exportToPDF(item.id, 'sj')"
+                @click="exportToPDF_api(item.id, 'sj')"
               >
                 <v-icon
                 small
                 class="mr-2"
                 color="white"
-                @click="exportToPDF(item.id, 'sj')"
+                
               >
                 mdi-file-pdf-box
               </v-icon>
@@ -156,6 +158,14 @@
               >
                 mdi-delete
               </v-icon>
+              <v-icon
+                small
+                class="mr-2"
+                :color="(item.id == selected_inv) ? 'success' : 'secondary'"
+                @click="preview_func(item.id)"
+              >
+                mdi-eye
+              </v-icon>
             </template>
             <template v-slot:item.sales_contract.total ="{ item }">
               {{ item.sales_contract.total | rupiah }}
@@ -166,7 +176,7 @@
           
             </v-data-table>
           </v-card>
-          <div class="d-none" id="cetak2">
+          <div :class="(preview_pdf == true) ? '' : 'd-none'" id="cetak2">
             <CetakPdf 
               :form_sc_prop = "form_sc" 
               :mode ="mode"
@@ -334,6 +344,8 @@ import moment from 'moment';
         },
         data(){
           return {
+              selected_inv : '',
+              preview_pdf : false,
               mode : 'invoice',
               form_sc : {
                 sc_id             : '',
@@ -372,7 +384,7 @@ import moment from 'moment';
                   {
                       text: 'No',
                       align: 'start',
-                      sortable: false,
+                      sortable: true,
                       value: 'no',
                   },
                   {
@@ -390,13 +402,13 @@ import moment from 'moment';
                   {
                       text: 'Tanggal Invoice',
                       align: 'start',
-                      sortable: false,
+                      sortable: true,
                       value: 'tanggal_invoice',
                   },
                   {
                       text: 'total contract',
                       align: 'start',
-                      sortable: false,
+                      sortable: true,
                       value: 'sales_contract.total',
                   },
                   { text: 'Actions', value: 'actions', sortable: false },
@@ -407,6 +419,8 @@ import moment from 'moment';
               modal2 : false,
               item_invoice : [],
               items_sc : [],
+              sortBy : '',
+              sortDesc: false,
           }
         },
         computed : {
@@ -420,6 +434,24 @@ import moment from 'moment';
           },
         },  
         methods :  {
+          wait(ms) {
+            return new Promise(resolve => {
+              setTimeout(resolve, ms);
+            });
+          },
+          async preview_func(id){
+            if (this.selected_inv == id){
+              this.preview_pdf = false
+              this.selected_inv = ''
+            }else{
+              this.preview_pdf = true;
+              await this.wait(1000);
+              this.$vuetify.goTo('#cetak2')
+              this.selected_inv = id;
+              this.show_invoice(id);
+            }
+          },
+
           async exportToPDF(id, doc){
             
             if (doc == 'sj'){
@@ -447,9 +479,55 @@ import moment from 'moment';
                 // do something for any other platform
             }
           },
+          async exportToPDF_api(id,doc) {
+            if (doc == 'sj'){
+              this.mode = 'sj'
+            } 
+            if (doc == 'invoice'){
+              this.mode = 'inv'
+            } 
+            let fetch_invoice = await this.show_invoice(id);
+            if(fetch_invoice){
+              this.$axios.post('/download-pdf',{id : id, tipe : this.mode},{ responseType: 'blob' })
+                  .then(response => {                 
+                      // Create a Blob object from the response data
+                      const blob = new Blob([response.data], { type: 'application/pdf' });
+                      // Create a temporary URL for the Blob
+                      const url = window.URL.createObjectURL(blob);
+                      // Create a link element and simulate a click to trigger the download
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', 'sales_contract.pdf'); // Set the filename
+                      document.body.appendChild(link);
+                      link.click();
+                      // Cleanup
+                      window.URL.revokeObjectURL(url);
+                  })
+                  .catch(error => {
+                      console.log(error);
+                      this.loading_rekap = false;
+                  })
+            }
+          },
           show_dialog_delete(id){
             this.dialog_delete_invoice = true;
             this.invoice_id_todelete = id;
+          },
+          handle_sortBy(sortBy){
+            this.sortBy = sortBy;
+            console.log(sortBy);
+            if (sortBy){
+              this.sort_invoice();
+            }else {
+              this.get_invoice();
+            }
+          },
+          handle_sortDesc(sortDesc){
+            this.sortDesc = sortDesc;
+            console.log(sortDesc);
+            if (sortDesc){
+              this.sort_invoice()
+            } 
           },
           handlePagination(pagination) {
             if(this.pagination.page != pagination.page){
@@ -478,8 +556,30 @@ import moment from 'moment';
             }
           },
           get_invoice(){
+            this.item_invoice = [];
             this.loading_invoice = true;
             this.$axios.get('/invoice')
+            .then(response => {
+              response.data.data.data.forEach((x ,index) => {
+                if(index == 0){
+                  x.no = response.data.data.from ;
+                }else{
+                  x.no = response.data.data.from + index ;
+                }
+                this.item_invoice.push(x);
+              })
+              this.pagination.itemsLength = response.data.data.total
+              this.loading_invoice= false;
+            })
+            .catch(error => {
+              console.log(error);
+              this.loading_sc = false;
+            })
+          },
+          sort_invoice(){
+            this.item_invoice = []
+            this.loading_invoice = true;
+            this.$axios.post('/invoice/sort-invoice',{sortBy : this.sortBy, sortDesc : this.sortDesc})
             .then(response => {
               response.data.data.data.forEach((x ,index) => {
                 if(index == 0){
