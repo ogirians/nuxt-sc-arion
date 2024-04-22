@@ -480,15 +480,16 @@ import moment from 'moment';
             }
           },
           async exportToPDF_api(id,doc) {
+            let tipe = '';
             if (doc == 'sj'){
-              this.mode = 'sj'
+              tipe = 'sj'
             } 
             if (doc == 'invoice'){
-              this.mode = 'inv'
+              tipe = 'inv'
             } 
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
-              this.$axios.post('/download-pdf',{id : id, tipe : this.mode},{ responseType: 'blob' })
+              this.$axios.post('/download-pdf',{id : id, tipe : tipe},{ responseType: 'blob' })
                   .then(response => {                 
                       // Create a Blob object from the response data
                       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -497,7 +498,7 @@ import moment from 'moment';
                       // Create a link element and simulate a click to trigger the download
                       const link = document.createElement('a');
                       link.href = url;
-                      link.setAttribute('download', 'sales_contract.pdf'); // Set the filename
+                      link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')); // Set the filename
                       document.body.appendChild(link);
                       link.click();
                       // Cleanup
