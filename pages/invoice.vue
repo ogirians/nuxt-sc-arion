@@ -665,7 +665,7 @@ import moment from 'moment';
           delete_invoice() {
             this.$axios.delete('/invoice/'+this.invoice_id_todelete)
             .then(response => {
-              this.dialog_delete_invoice = false;
+              this.dialog_delete_invoice = false;  
               this.item_invoice = [];
               this.get_invoice();
               console.log('berhasil hapus')
@@ -704,7 +704,7 @@ import moment from 'moment';
                 
                 console.log(sales_contract);
                   this.form_sc.sc_id             = sales_contract.id;
-                  this.form_sc.date              = sales_contract.tangga_sc;
+                  this.form_sc.date              = response.data.data.tanggal_invoice;
                   this.form_sc.customer          = data_customer;
                   this.form_sc.customer_json     = data_customer;
                   this.form_sc.products          = sales_contract.item;
