@@ -1,0 +1,8 @@
+{
+  "appId": "arion.com",
+  "appName": "sc-arion",
+  "webDir": "dist",
+  "plugins": {
+    "Filesystem": {}
+  }
+}

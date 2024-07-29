@@ -670,6 +670,9 @@
 <script>
 // import html2pdf from "html2pdf.js";
 import moment from 'moment';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
 
 export default {
   name: 'IndexPage',
@@ -1171,17 +1174,51 @@ export default {
           this.$axios.post('/download-pdf',{id : id, tipe : 'sc'},{ responseType: 'blob' })
               .then(response => {                 
                   // Create a Blob object from the response data
-                  const blob = new Blob([response.data], { type: 'application/pdf' });
-                  // Create a temporary URL for the Blob
-                  const url = window.URL.createObjectURL(blob);
-                  // Create a link element and simulate a click to trigger the download
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.setAttribute('download', 'sales_contract.pdf'); // Set the filename
-                  document.body.appendChild(link);
-                  link.click();
-                  // Cleanup
-                  window.URL.revokeObjectURL(url);
+                  if (Capacitor.getPlatform() === 'android') {
+                    // Android-specific handling
+                    console.log('Running on Android');
+                    
+                    // Convert Blob to base64
+                    const reader = new FileReader();
+                    reader.readAsDataURL(response.data);
+                    reader.onloadend = async () => {
+                      const base64Data = reader.result.split(',')[1];
+
+                      try {
+                        // Write the file
+                        const pdfFile = await Filesystem.writeFile({
+                          path: 'secrets/sales_contract_'+this.$moment().format('YYYY-MM-DD'),
+                          data: base64Data,
+                          directory: Directory.External,
+                          recursive: true,
+                        });
+
+                        // Open the file
+                        await FileOpener.open({
+                          filePath: pdfFile.uri,
+                          openWithDefault: true,
+                        });
+                        console.log('File opened successfully');
+                      } catch (e) {
+                        console.error(`Unable to open file: ${e.message}`);
+                      }
+                    };
+
+                  } else if (Capacitor.getPlatform() === 'web') {
+                    // Web-specific handling
+                    console.log('Running on a web');
+                    
+                    // Create a Blob URL and trigger download
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download','sales_contract_'+this.$moment().format('YYYY-MM-DD'));
+                    document.body.appendChild(link);
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                    link.remove();
+                  }
               })
               .catch(error => {
                   console.log(error);

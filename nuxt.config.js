@@ -53,9 +53,10 @@ export default {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     // baseURL: 'http://localhost:8005/api',
     baseURL: 'https://www.arionpancasekawan.com/api',
-    credentials: true,
+    withCredentials: true,
     init(axios) {
-      axios.defaults.withCredentials = true
+      axios.defaults.withCredentials = true,
+      axios.defaults.withXSRFToken = true
     }
   },
 
