@@ -332,6 +332,9 @@
 
 <script>
 import moment from 'moment';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
 
     export default {
         mounted(){
@@ -490,7 +493,42 @@ import moment from 'moment';
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
               this.$axios.post('/download-pdf',{id : id, tipe : tipe},{ responseType: 'blob' })
-                  .then(response => {                 
+                  .then(response => {   
+                    
+                    if (Capacitor.getPlatform() === 'android') {
+                    // Android-specific handling
+                      console.log('Running on Android');
+                      
+                      // Convert Blob to base64
+                      const reader = new FileReader();
+                      reader.readAsDataURL(response.data);
+                      reader.onloadend = async () => {
+                        const base64Data = reader.result.split(',')[1];
+
+                        try {
+                          // Write the file
+                          const pdfFile = await Filesystem.writeFile({
+                            path: 'secrets/'+tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
+                            data: base64Data,
+                            directory: Directory.External,
+                            recursive: true,
+                          });
+
+                          // Open the file
+                          await FileOpener.open({
+                            filePath: pdfFile.uri,
+                            openWithDefault: true,
+                          });
+                          console.log('File opened successfully');
+                        } catch (e) {
+                          console.error(`Unable to open file: ${e.message}`);
+                        }
+                      };
+
+                    } else if (Capacitor.getPlatform() === 'web') {
+                      // Web-specific handling
+                      console.log('Running on a web');
+                      
                       // Create a Blob object from the response data
                       const blob = new Blob([response.data], { type: 'application/pdf' });
                       // Create a temporary URL for the Blob
@@ -498,11 +536,14 @@ import moment from 'moment';
                       // Create a link element and simulate a click to trigger the download
                       const link = document.createElement('a');
                       link.href = url;
-                      link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')); // Set the filename
+                      link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf'); // Set the filename
                       document.body.appendChild(link);
                       link.click();
                       // Cleanup
                       window.URL.revokeObjectURL(url);
+
+                    }
+                     
                   })
                   .catch(error => {
                       console.log(error);

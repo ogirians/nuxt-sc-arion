@@ -16,6 +16,7 @@
     "@capacitor/filesystem": "^6.0.0",
     "@nuxtjs/axios": "^5.13.6",
     "@nuxtjs/moment": "^1.6.1",
+    "capacitor-resources": "^2.0.5",
     "core-js": "^3.25.3",
     "html2pdf.js": "^0.10.1",
     "nuxt": "^2.15.8",
@@ -25,6 +26,7 @@
     "vuetify": "^2.6.10"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@nuxtjs/vuetify": "^1.12.3"
   }
 }

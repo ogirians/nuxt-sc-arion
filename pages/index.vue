@@ -663,7 +663,7 @@
           mdi-close-outline
         </v-icon>
       </v-sheet>
-    </v-overlay>   
+    </v-overlay> 
   </v-container>
 </template>
 
@@ -1187,7 +1187,7 @@ export default {
                       try {
                         // Write the file
                         const pdfFile = await Filesystem.writeFile({
-                          path: 'secrets/sales_contract_'+this.$moment().format('YYYY-MM-DD'),
+                          path: 'secrets/sales_contract_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
                           data: base64Data,
                           directory: Directory.External,
                           recursive: true,
@@ -1213,7 +1213,7 @@ export default {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    link.setAttribute('download','sales_contract_'+this.$moment().format('YYYY-MM-DD'));
+                    link.setAttribute('download','sales_contract_'+this.$moment().format('YYYY-MM-DD')+'.pdf');
                     document.body.appendChild(link);
                     link.click();
                     window.URL.revokeObjectURL(url);
