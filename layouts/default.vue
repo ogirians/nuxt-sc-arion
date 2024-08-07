@@ -50,9 +50,9 @@
     <v-spacer />
     
     </v-app-bar>
-    <v-main class="mb-15 mt-5">
+    <v-main class="mb-15" style="background-color: #f8fffd;">
 
-      <v-container>
+      <v-container class="px-0">
         <Nuxt />
         
       </v-container>
@@ -61,35 +61,33 @@
     <v-bottom-navigation
       v-model="bottom"
       :background-color="color"
-      dark
       shift
       fixed
       grow
-      rounded-lg 
-      rounded-b-0
+      color="#6da4ab"
     >
-      <v-btn :to="items[0].to">
+      <v-btn :to="items[0].to" grow style="height: 100%;">
         <span>Contracts</span>
         <v-icon>mdi-lead-pencil</v-icon>
       </v-btn>
 
-      <v-btn :to="items[1].to">
+      <v-btn :to="items[1].to" grow style="height: 100%;">
         <span>Invoices</span>
 
         <v-icon>mdi-calculator</v-icon>
       </v-btn>
-      <v-btn color="green">
+      <v-btn :to="items[2].to" grow style="height: 100%;">
         <span></span>
         
-        <v-icon>mdi-plus</v-icon>
+        <v-icon>mdi-home</v-icon>
       </v-btn>
-      <v-btn :to="items[2].to"> 
+      <v-btn :to="items[3].to" grow style="height: 100%;"> 
         <span>Rekap</span>
 
         <v-icon>mdi-book</v-icon>
       </v-btn>
 
-      <v-btn :to="items[3].to">
+      <v-btn :to="items[4].to" grow style="height: 100%;">
         <span>Coming</span>
 
         <v-icon>mdi-image</v-icon>
@@ -126,10 +124,16 @@ export default {
           title: 'generate sales contract',
           to: '/'
         },
+        
         {
           icon: 'mdi-apps',
           title: 'generate Invoice',
           to: '/invoice'
+        },
+        {
+          icon: 'mdi-apps',
+          title: 'generate sales contract',
+          to: '/home'
         },
         {
           icon: 'mdi-apps',
@@ -151,11 +155,11 @@ export default {
   computed: {
       color () {
         switch (this.bottom) {
-          case 0: return 'blue-grey'
-          case 1: return 'blue-grey'
-          case 2: return 'blue-grey'
-          case 3: return 'blue-grey'
-          default: return 'blue-grey'
+          case 0: return 'white'
+          case 1: return 'white'
+          case 2: return 'white'
+          case 3: return 'white'
+          default: return 'white'
         }
       },
     },

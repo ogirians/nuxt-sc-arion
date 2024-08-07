@@ -52,7 +52,7 @@ export default {
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     // baseURL: 'http://localhost:8005/api',
-    baseURL: 'https://www.arionpancasekawan.com/api',
+    baseURL: 'http://172.9.1.157:8005/api',
     withCredentials: true,
     init(axios) {
       axios.defaults.withCredentials = true,
@@ -66,10 +66,10 @@ export default {
     theme: {
       dark: false,
       themes: {
-        dark: {
-          primary: colors.blue.darken2,
+        light: {
+          primary: "#6da4ab",
           accent: colors.grey.darken3,
-          secondary: colors.amber.darken3,
+          secondary: "#a0adb5",
           info: colors.teal.lighten1,
           warning: colors.amber.base,
           error: colors.deepOrange.accent4,
@@ -86,5 +86,10 @@ export default {
   moment: {
     timezone: true,
     locales: ['id']
-  }
+  },
+
+  server: {
+    port: 3000, // default: 3000
+    host: '0.0.0.0', // default: localhost,
+  },
 }

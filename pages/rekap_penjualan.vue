@@ -1,8 +1,15 @@
 <template>
     <v-container>
+       
         <v-card class="logo" color="primary" elevation="5">
-              <v-card-title>
-                  <span style="color:white" class="mr-5"> 
+            <v-img 
+                src="/card_background.jpg" 
+                max-height="200"
+                max-width="100%"
+                style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
+            </v-img>
+              <v-card-title style="height: 70px;">
+                  <span style="color:white ;position: absolute; z-index: 1;" class="mr-5"> 
                   REKAP PENJUALAN
                   </span>
                   <v-spacer></v-spacer>

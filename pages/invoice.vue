@@ -1,8 +1,89 @@
 <template>
     <v-container>
+      <v-app-bar
+        fixed
+        app
+        elevation="0"
+        color="white"
+        class="pa-0"
+        :height="height"
+        style="margin-top: 55px"
+        :hide-on-scroll="hide_bar"
+      > 
+        <v-container> 
+          <v-row class="mt-3">
+              <v-col cols="12" md="4" class="py-0">
+                <v-text-field
+                  v-model="search_invoice"
+                  label="Cari nama atau nomor sales contract..."
+                  prepend-inner-icon="mdi-magnify"
+                  class="mx-4 py-0"
+                  outlined
+                  dense
+                  clearable
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="4" class="py-0">
+                <v-dialog
+                  ref="dialog2"
+                  v-model="modal2"
+                  :return-value.sync="date_invoice_search"
+                  persistent
+                  width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs2 }">
+                    <v-text-field            
+                      v-model="date_invoice_search"
+                      label="tanggal_sc"
+                      prepend-inner-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs2"
+                      v-on="on"
+                      dense
+                      outlined
+                      class="mx-4 py-0"
+                      clearable
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="date_invoice_search"
+                    scrollable          
+                  >
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="modal2 = false"
+                    >
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="$refs.dialog2.save(date_invoice_search)"
+                    >
+                      OK
+                    </v-btn>
+                  </v-date-picker>
+                </v-dialog>
+              </v-col>
+              <v-col cols="12" md="4" class="py-0 mb-0">
+                <v-btn @click="search_invoice_func()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
+                  cari
+                </v-btn>
+              </v-col>
+          </v-row>
+        </v-container>
+      </v-app-bar>
       <v-card class="logo" color="primary" elevation="5">
+          <v-img 
+              src="/card_background.jpg" 
+              max-height="100"
+              max-width="100%"
+              style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
+          </v-img>
           <v-card-title>
-              <span style="color:white" class="mr-5"> 
+              <span style="color:white; position: absolute; z-index: 1;" class="mr-5"> 
               RIWAYAT INVOICE
               </span>
               <v-spacer></v-spacer>
@@ -33,68 +114,7 @@
             >
             <!-- :mobile-breakpoint="0"  to disbale vertical row -->
             <template v-slot:top="{ item }">
-              <v-row class="mt-3">
-                <v-col cols="12" md="4" class="py-0">
-                  <v-text-field
-                    v-model="search_invoice"
-                    label="Cari nama atau nomor sales contract..."
-                    prepend-inner-icon="mdi-magnify"
-                    class="mx-4 py-0"
-                    outlined
-                    dense
-                    clearable
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="4" class="py-0">
-                  <v-dialog
-                    ref="dialog2"
-                    v-model="modal2"
-                    :return-value.sync="date_invoice_search"
-                    persistent
-                    width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs2 }">
-                      <v-text-field            
-                        v-model="date_invoice_search"
-                        label="tanggal_sc"
-                        prepend-inner-icon="mdi-calendar"
-                        readonly
-                        v-bind="attrs2"
-                        v-on="on"
-                        dense
-                        outlined
-                        class="mx-4 py-0"
-                        clearable
-                      ></v-text-field>
-                    </template>
-                    <v-date-picker
-                      v-model="date_invoice_search"
-                      scrollable          
-                    >
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="modal2 = false"
-                      >
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="$refs.dialog2.save(date_invoice_search)"
-                      >
-                        OK
-                      </v-btn>
-                    </v-date-picker>
-                  </v-dialog>
-                </v-col>
-                <v-col cols="12" md="4" class="py-0 mb-3">
-                  <v-btn @click="search_invoice_func()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
-                    cari
-                  </v-btn>
-                </v-col>
-              </v-row>
+              
               <v-divider></v-divider>
               <v-dialog v-model="dialog_delete_invoice" max-width="500px">
                 <v-card>
@@ -427,6 +447,24 @@ import { FileOpener } from '@capacitor-community/file-opener';
           }
         },
         computed : {
+          height () {
+            switch (this.$vuetify.breakpoint.name) {
+              case 'xs': return 200
+              case 'sm': return 200
+              case 'md': return 75
+              case 'lg': return 75
+              case 'xl': return 75
+            }
+          },
+          hide_bar () {
+            switch (this.$vuetify.breakpoint.name) {
+              case 'xs': return true
+              case 'sm': return true
+              case 'md': return false
+              case 'lg': return false
+              case 'xl': return false
+            }
+          },
           form_invoice() {
             const form = {
               sales_contract_id  : this.selected_sc,

@@ -4,5 +4,9 @@
   "webDir": "dist",
   "plugins": {
     "Filesystem": {}
+  },
+  "server": {
+    "url": "http://172.9.1.157:3000",
+    "cleartext": true
   }
 }
