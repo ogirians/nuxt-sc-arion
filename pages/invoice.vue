@@ -129,23 +129,43 @@
               </v-dialog>
             </template>
             <template v-slot:item.actions="{ item }">
+             <v-menu
+                top
+                :offset-x="true"
+                rounded="lg"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-chip
+                    color="primary"
+                    dark
+                    v-bind="attrs"
+                    v-on="on"
+                    x-small
+                    class="mr-2"
+                  >
+                  <v-icon
+                    small
+                    class="mr-2"
+                    color="white"
+                    
+                  >
+                    mdi-file-pdf-box
+                  </v-icon>
+                  inv
+                  </v-chip>
+                </template>
+
+                <v-list>
+                  <v-list-item                  >
+                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice')">with stamp</v-list-item-title>
+                  </v-list-item>
+                  <v-divider />
+                  <v-list-item>
+                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice-x')">no stamp</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
               
-              <v-chip
-                class="mr-2"
-                x-small
-                color="warning"
-                @click="exportToPDF_api(item.id, 'invoice')"
-              >
-               <v-icon
-                small
-                class="mr-2"
-                color="white"
-                
-              >
-                mdi-file-pdf-box
-              </v-icon>
-                inv
-              </v-chip>
 
               <v-chip
                 class="mr-2"
@@ -163,6 +183,24 @@
               </v-icon>
                  sj
               </v-chip>
+
+              <v-chip
+                class="mr-2"
+                x-small
+                color="cyan"
+                dark
+                @click="isAddingMemo = true; memoToDownload = item.id"
+              >
+                <v-icon
+                small
+                class="mr-2"
+                color="white"
+                
+              >
+                mdi-file-pdf-box
+              </v-icon>
+                 mm
+              </v-chip>
               <!-- <v-icon
                 small
                 class="mr-2"
@@ -178,14 +216,14 @@
               >
                 mdi-delete
               </v-icon>
-              <v-icon
+              <!-- <v-icon
                 small
                 class="mr-2"
                 :color="(item.id == selected_inv) ? 'success' : 'secondary'"
                 @click="preview_func(item.id)"
               >
                 mdi-eye
-              </v-icon>
+              </v-icon> -->
             </template>
             <template v-slot:item.sales_contract.total ="{ item }">
               {{ item.sales_contract.total | rupiah }}
@@ -345,6 +383,103 @@
               </v-card-actions>          
             </v-card>
           </v-overlay>
+          <v-overlay
+            :absolute="false"
+            :value="isAddingMemo"
+          >
+            <v-card 
+              
+              light
+            >
+              <v-card-title>Info tambahan: </v-card-title>
+              <v-divider></v-divider>
+              <div class="mx-4 mt-2">
+              Keterangan :
+              </div> 
+              <v-col
+                class="d-flex pb-0"
+                cols="12"
+              >
+                <v-text-field
+                    v-model="keterangan"
+                    placeholder="keteranngan"
+                    dense
+                    outlined
+                    class="mt-0 py-0"
+                    clearable
+                >
+                </v-text-field>
+              </v-col>
+              <div class="mx-4 mt-0">
+              Sopir :
+              </div> 
+              <v-col
+                class="d-flex pb-0"
+                cols="12"
+              >
+                <v-text-field
+                    v-model="sopir"
+                    placeholder="sopir"
+                    dense
+                    outlined
+                    class="mt-0 py-0"
+                    clearable
+                >
+                </v-text-field>
+              </v-col>
+              <div class="mx-4 mt-0">
+              Nopol :
+              </div> 
+              <v-col
+                class="d-flex pb-0"
+                cols="12"
+              >
+                <v-text-field
+                    v-model="nopol"
+                    placeholder="nopol"
+                    dense
+                    outlined
+                    class="mt-0 py-0"
+                    clearable
+                >
+                </v-text-field>
+              </v-col>
+             
+              
+              <v-divider></v-divider>
+              <v-card-actions class="d-flex justify-end">            
+                <v-btn
+                  small
+                  class=""
+                  :width="60"
+                  color="error"
+                  @click="isAddingMemo = false; clear_form_memo()"
+                  :disabled="loading_simpan"
+                >
+                  <div>batal</div>                
+                </v-btn>
+                <v-btn
+                  small
+                  class=""
+                  :width="60"
+                  color="success"
+                  @click="exportToPDF_api(memoToDownload, 'memo'); isAddingMemo = false; clear_form_memo();"
+                  :disabled="loading_simpan"
+                  v-if="isEditingInvoice == false"            
+                >
+                  <div v-if="loading_simpan == false"><v-icon>mdi-download</v-icon></div>
+                  <div v-else>
+                    <v-progress-circular
+                        indeterminate
+                        color="white"
+                        
+                        :size="20"
+                      ></v-progress-circular>
+                  </div>
+                </v-btn>              
+              </v-card-actions>          
+            </v-card>
+          </v-overlay>
         </v-container>    
       </v-card>      
     </v-container>
@@ -397,6 +532,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
               search_sc : '', 
               selected_sc : '',
               isAddingInvoice : false,
+              isAddingMemo: false,
               loading_invoice : false,
               pagination: {
                     page: 1, // Current page
@@ -444,6 +580,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
               items_sc : [],
               sortBy : '',
               sortDesc: false,
+              keterangan:'',
+              sopir:'',
+              nopol:'',
+              memoToDownload: ''
           }
         },
         computed : {
@@ -473,8 +613,22 @@ import { FileOpener } from '@capacitor-community/file-opener';
 
             return form
           },
+          form_mm() {
+            const form = {
+              keterangan  : this.keterangan,
+              sopir : this.sopir,
+              nopol : this.nopol
+            }
+
+            return form
+          },
         },  
         methods :  {
+          clear_form_memo(){
+            this.keterangan = '';
+            this.sopir = '';
+            this.nopol = '';
+          },
           wait(ms) {
             return new Promise(resolve => {
               setTimeout(resolve, ms);
@@ -522,15 +676,23 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
           async exportToPDF_api(id,doc) {
             let tipe = '';
+            let stamp = true;
             if (doc == 'sj'){
-              tipe = 'sj'
+              tipe = 'sj';
             } 
             if (doc == 'invoice'){
-              tipe = 'inv'
+              tipe = 'inv';
+            } 
+            if (doc == 'invoice-x'){
+              tipe = 'inv';
+              stamp = false;
+            } 
+            if (doc == 'memo'){
+              tipe = 'mm';
             } 
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
-              this.$axios.post('/download-pdf',{id : id, tipe : tipe},{ responseType: 'blob' })
+              this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
                   .then(response => {   
                     
                     if (Capacitor.getPlatform() === 'android') {

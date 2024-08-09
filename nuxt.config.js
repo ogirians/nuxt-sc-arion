@@ -5,6 +5,7 @@ export default {
   // target: 'static',
 
   // Global page headers: https://go.nuxtjs.dev/config-head
+  
   head: {
     titleTemplate: '%s - sc-arion',
     title: 'sc-arion',
@@ -52,7 +53,7 @@ export default {
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     // baseURL: 'http://localhost:8005/api',
-    baseURL: 'http://172.9.1.157:8005/api',
+    baseURL: 'https://arionpancasekawan.com/api',
     withCredentials: true,
     init(axios) {
       axios.defaults.withCredentials = true,

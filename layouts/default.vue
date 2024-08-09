@@ -122,7 +122,7 @@ export default {
         {
           icon: 'mdi-apps',
           title: 'generate sales contract',
-          to: '/'
+          to: '/sales_contract'
         },
         
         {
@@ -133,7 +133,7 @@ export default {
         {
           icon: 'mdi-apps',
           title: 'generate sales contract',
-          to: '/home'
+          to: '/'
         },
         {
           icon: 'mdi-apps',
