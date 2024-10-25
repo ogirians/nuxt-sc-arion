@@ -388,64 +388,146 @@
             :value="isAddingMemo"
           >
             <v-card 
-              
+              max-height="400px"
               light
             >
               <v-card-title>Info tambahan: </v-card-title>
               <v-divider></v-divider>
-              <div class="mx-4 mt-2">
-              Keterangan :
-              </div> 
-              <v-col
-                class="d-flex pb-0"
-                cols="12"
-              >
-                <v-text-field
-                    v-model="keterangan"
-                    placeholder="keteranngan"
-                    dense
-                    outlined
-                    class="mt-0 py-0"
-                    clearable
-                >
-                </v-text-field>
-              </v-col>
-              <div class="mx-4 mt-0">
-              Sopir :
-              </div> 
-              <v-col
-                class="d-flex pb-0"
-                cols="12"
-              >
-                <v-text-field
-                    v-model="sopir"
-                    placeholder="sopir"
-                    dense
-                    outlined
-                    class="mt-0 py-0"
-                    clearable
-                >
-                </v-text-field>
-              </v-col>
-              <div class="mx-4 mt-0">
-              Nopol :
-              </div> 
-              <v-col
-                class="d-flex pb-0"
-                cols="12"
-              >
-                <v-text-field
-                    v-model="nopol"
-                    placeholder="nopol"
-                    dense
-                    outlined
-                    class="mt-0 py-0"
-                    clearable
-                >
-                </v-text-field>
-              </v-col>
-             
               
+              <v-card max-height="200px" class="overflow-auto" elevation="0"> 
+                <div class="mx-4 mt-4">
+                tanggal memo :
+                </div>
+                <v-col cols="12" class="py-0">
+                    <v-dialog
+                      ref="dialog2"
+                      v-model="modal2"
+                      :return-value.sync="date_mm"
+                      persistent
+                      width="290px"
+                    >
+                      <template v-slot:activator="{ on, attrs2 }">
+                        <v-text-field            
+                          v-model="date_mm"
+                          placeholder="tanggal"
+                          prepend-inner-icon="mdi-calendar"
+                          readonly
+                          v-bind="attrs2"
+                          v-on="on"
+                          dense
+                          outlined
+                          class="mt-3 py-0"
+                          clearable
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker
+                        v-model="date_mm"
+                        scrollable          
+                      >
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="modal2 = false"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="$refs.dialog2.save(date_mm)"
+                        >
+                          OK
+                        </v-btn>
+                      </v-date-picker>
+                  </v-dialog>
+                </v-col> 
+                <div class="mx-4 mt-2">
+                Suplier :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="mm_supplier"
+                      placeholder="nama suplier"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-2">
+                Alamat suplier :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="mm_alamat_supplier"
+                      placeholder="alamat"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-2">
+                Keterangan :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="keterangan"
+                      placeholder="keteranngan"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-0">
+                Sopir :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="sopir"
+                      placeholder="sopir"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-0">
+                Nopol :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="nopol"
+                      placeholder="nopol"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+              </v-card>
               <v-divider></v-divider>
               <v-card-actions class="d-flex justify-end">            
                 <v-btn
@@ -463,7 +545,7 @@
                   class=""
                   :width="60"
                   color="success"
-                  @click="exportToPDF_api(memoToDownload, 'memo'); isAddingMemo = false; clear_form_memo();"
+                  @click="exportToPDF_api(memoToDownload, 'memo'); isAddingMemo = false;"
                   :disabled="loading_simpan"
                   v-if="isEditingInvoice == false"            
                 >
@@ -499,9 +581,12 @@ import { FileOpener } from '@capacitor-community/file-opener';
         },
         created(){
           this.date_invoice = this.$moment().format('YYYY-MM-DD');
+          this.date_mm = this.$moment().format('YYYY-MM-DD');
         },
         data(){
           return {
+              mm_supplier : '',
+              mm_alamat_supplier: '',
               selected_inv : '',
               preview_pdf : false,
               mode : 'invoice',
@@ -574,6 +659,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
               ],
               search_sc : '',                     
               date_invoice : '',
+              date_mm : '',
               date_sc : '',
               modal2 : false,
               item_invoice : [],
@@ -617,7 +703,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
             const form = {
               keterangan  : this.keterangan,
               sopir : this.sopir,
-              nopol : this.nopol
+              nopol : this.nopol,
+              nama_supplier : this.mm_supplier,
+              alamat_supplier : this.mm_alamat_supplier,
+              tanggal_berangkat : this.date_mm
             }
 
             return form
@@ -625,6 +714,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
         },  
         methods :  {
           clear_form_memo(){
+            this.mm_supplier = '';
+            this.mm_alamat_supplier = '';
             this.keterangan = '';
             this.sopir = '';
             this.nopol = '';
@@ -724,6 +815,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                           console.error(`Unable to open file: ${e.message}`);
                         }
                       };
+                      this.clear_form_memo()
 
                     } else if (Capacitor.getPlatform() === 'web') {
                       // Web-specific handling
@@ -741,6 +833,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       link.click();
                       // Cleanup
                       window.URL.revokeObjectURL(url);
+
+                      this.clear_form_memo()
 
                     }
                      

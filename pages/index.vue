@@ -308,7 +308,7 @@
                   >
                       <div class="mr-auto">
                           <v-chip small :color="data.tipe == 'invoice' ? 'success' : 'warning'" class="mt-2 mr-auto">{{ data.tipe }}</v-chip>
-                          <v-chip small :color='data.color' class="mt-2 mr-auto">{{ data.action }}</v-chip>
+                          <v-chip small :color="data.color" class="mt-2 mr-auto">{{ data.action }} : {{data.created | tanggal_id_jam}} </v-chip>
                       </div>
                       
                       <div>
@@ -409,6 +409,12 @@ export default{
           })
       },
       get_activity(kategori = ''){
+
+          console.log(kategori);
+          if(kategori == '/undefined'){
+            kategori = '';
+          }
+
           this.sc_data = [];
           this.proses_get_activity = true;
           let get_data = '';
@@ -444,11 +450,13 @@ export default{
                           total : data.sales_contract.total,
                           no_sc : data.sales_contract.nomor_sc,
                           action : data.action,
-                          color : data.color
+                          color : data.color,
+                          created : data.created_at
                       }
   
                       this.sc_data.push(isi);
                       this.proses_get_activity = false;
+                      this.ada_activities = true;
                   
                   });
               }else{
@@ -472,6 +480,10 @@ export default{
       },
       tanggal_id(value){
       let date_id = moment(value).format('DD-MM-YYYY');
+      return  date_id;
+      },
+      tanggal_id_jam(value){
+      let date_id = moment(value).format('DD-MM-YYYY HH:mm:ss');
       return  date_id;
       }
   },

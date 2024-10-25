@@ -170,12 +170,21 @@
               >
                 mdi-delete
               </v-icon>
+              <v-icon
+                class="mr-2"
+                small
+                color="secondary"
+                @click="isAddingFile = true; selected_sc = item.id"
+              >
+                mdi-paperclip
+              </v-icon>
               <!-- <v-icon
                 small
                 :color="(item.id == selected_sc) ? 'success' : 'secondary'"
                 @click="preview_func(item.id)"
               >
                 mdi-eye
+
               </v-icon> -->
             </template>
             <template v-slot:item.total="{ item }">
@@ -276,6 +285,7 @@
                         v-model="customer.nama"
                         required
                         :rules="[v => !!v || 'nama wajib diisi']"
+                        :disabled = isEditing
                       >
                         <template v-slot:append-outer>
                           <v-slide-x-reverse-transition
@@ -299,6 +309,7 @@
                         v-model = "customer.npwp"
                         required
                         :rules="[v => !!v || 'npwp wajib diisi ']"
+                        :disabled = "isEditing"
                       >              
                       </v-text-field>                   
                     </v-col>
@@ -311,6 +322,7 @@
                         v-model = "customer.alamat" 
                         required
                         :rules="[v => !!v || 'alamat wajib diisi']"
+                        :disabled = isEditing
                       >              
                       </v-text-field>                   
                     </v-col>
@@ -320,7 +332,7 @@
                         filled    
                         small         
                         dense 
-                        v-model = "customer.alamat_pengambilan"              
+                        v-model = "customer.alamat_pengambilan"
                       >              
                       </v-text-field>                   
                     </v-col>
@@ -392,7 +404,7 @@
                         <v-icon small color="warning">
                           mdi-alert-box
                         </v-icon>
-                      </span>
+                      </span>data
                     </template>
                     <span>{{error_simpan.data.validate_errors.ongkir[0]}}</span>
                   </v-tooltip>
@@ -420,12 +432,12 @@
                          persis
                       </th>
                       <th class="text-left">
-                        QTY (Kg)<br>
+                        QTY<br>
                         <v-icon @click="CopyValue('qty')" small>mdi-list-box-outline</v-icon>
                          persis
                       </th>
                       <th class="text-left">
-                        TOTAL (Mtr)<br>
+                        LENGTH<br>
                         <v-icon @click="CopyValue('total_mtr')" small>mdi-list-box-outline</v-icon>
                          persis
                       </th>
@@ -433,6 +445,9 @@
                         HARGA<br>
                         <v-icon @click="CopyValue('harga')" small>mdi-list-box-outline</v-icon>
                          persis
+                      </th>
+                      <th class="text-left">
+                        KETERANGAN
                       </th>
                       <th class="text-left">
                         TOTAL
@@ -514,7 +529,16 @@
                             </template>
                             <span style="display: inline;">{{error_simpan.data.validate_errors[index].qty[0] }}</span>
                           </v-tooltip>
-                          <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>                    
+                          <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>   
+                          <v-select
+                            v-model="item.satuan_qty"
+                            :items="['Cm', 'Kg', 'M',]"
+                            label="satuan"
+                            persistent-hint
+                            return-object
+                            single-line
+                            style="width: 70px;"
+                          ></v-select>                
                         </div>
                       </td>              
                       <td>
@@ -539,6 +563,15 @@
                             <span style="display: inline;">{{error_simpan.data.validate_errors[index].total_mtr[0] }}</span>
                           </v-tooltip>
                           <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
+                          <v-select
+                            v-model="item.satuan_lenght"
+                            :items="['cm', 'kg', 'm2']"
+                            label="satuan"
+                            persistent-hint
+                            return-object
+                            single-line
+                            style="width: 70px;"
+                          ></v-select>  
                         </div>
                       </td>              
                       <td>
@@ -564,6 +597,9 @@
                           </v-tooltip>
                           <input @focus="ClearValue('harga',index)" @change="ConvertRp(index)" style="width: 100px;" type="text" v-model="item.harga_rp"/>                    
                         </div>
+                      </td>
+                      <td>
+                        <input style="width: 70px;" type="text" v-model="item.keterangan"/>
                       </td>              
                       <td>
                          <!-- <input style="width: 100px;" type="text" v-model="item.total"/>                     -->
@@ -579,10 +615,12 @@
                   <td style="min-width: 150px;">Ongkos Kirim</td>
                   <td>: {{ongkir | rupiah}}</td>
                 </tr>
-                <tr>
+                <!-- <tr>
                   <td>Total qty</td>
-                  <td>: {{sum_qty}} kg</td>
-                </tr>
+                  <td>
+                    : {{sum_qty}} kg
+                  </td>
+                </tr> -->
                 <tr>
                   <tr>
                     <td>Dpp</td>
@@ -629,6 +667,7 @@
                   </v-card-actions>          
                 </v-card>
               </v-overlay>
+              
             </v-card>
             <div class="d-flex justify-end">
             <!-- <v-btn @click="exportToPDF()" class="error mt-5 mr-5"><v-icon>mdi-file-pdf-box</v-icon>generate</v-btn> -->
@@ -647,7 +686,37 @@
               indeterminate
               size="40"
               ></v-progress-circular>
-          </v-overlay>   
+          </v-overlay> 
+          <v-overlay
+            :absolute="false"
+            :value="isAddingFile"
+          >
+          <v-card 
+            light
+            class="pa-2"
+          >
+            <v-card-title>upload dokumen: </v-card-title>
+            <v-divider></v-divider>
+              <!-- <input type="file" @change="handleFileUpload($event)" /> -->
+              <v-file-input
+                type="file"
+                show-size
+                truncate-length="15"
+                @change="handleFileUpload"
+              ></v-file-input>
+            <v-divider></v-divider>
+            <v-card-actions class="d-flex justify-end">            
+              <v-btn
+                small
+                class=""
+                color="success"
+                @click="isAddingFile = false; uploadFile();"
+              >
+                simpan
+              </v-btn>
+            </v-card-actions>          
+          </v-card>
+        </v-overlay>  
         </v-container>
       </v-card>
   
@@ -705,13 +774,16 @@
     mounted() {
       this.html2pdf = require('html2pdf.js');
     // use html2pdf here
-      this.get_sales_contract();
+      this.search_sales_contract();
     },
     created(){
       this.date = this.$moment().format('YYYY-MM-DD');
     },
     data(){
       return {
+         file : null,
+         isAddingFile : false,
+         isEditing : false,
          selected_sc : '',
          preview_pdf : false,
          mode: 'sc',
@@ -802,7 +874,10 @@
               harga_rp: '',
               harga: '',
               total_rp: '',
+              keterangan: '',
               total: '',
+              satuan_qty: 'kg',
+              satuan_lenght: 'cm',
             },          
           ],
         grand_total : 0,
@@ -900,12 +975,16 @@
       }
     },
     methods: {
-        
+        handleFileUpload(file) {
+            console.log(file)
+            this.file = file;
+        },
         convert_rupiah(value){
           return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
         },
         clear_form(){
-            this.date = this.$moment().format('YYYY-MM-DD');;
+            this.isEditing = false;
+            this.date = this.$moment().format('YYYY-MM-DD');
             this.customer = {
               nama :'',
               npwp :'',
@@ -973,7 +1052,7 @@
              this.get_sales_contract_data = '';
              this.items_sc = [];
              console.log(pagination)
-             this.$axios.get('sales_contract?page='+pagination.page)
+             this.$axios.post('sales_contract/search-sc?page='+pagination.page, {search_sc : this.search_sc , date_sc : this.date_sc})
              .then(response => {
                 // console.log(response);
                 response.data.data.data.forEach((x ,index) => {
@@ -1036,6 +1115,7 @@
               this.open_sc_form = true;
               this.loading_open_form = true;
               this.$vuetify.goTo('#tambah_sc')
+              this.isEditing = true;
             }
             this.$axios.get('/sales_contract/'+id)
             .then(response => {
@@ -1056,6 +1136,8 @@
                  x.total = x.qty * x.harga;
                  x.total_rp = this.convert_rupiah(x.total);
                  this.products.push(x);
+                 x.satuan_qty = x.satuan_qty ? x.satuan_qty : 'kg' 
+                 x.satuan_lenght = x.satuan_lenght ? x.satuan_lenght : 'kg' 
               });
               this.ongkir = data.ongkir;
               this.sales_contract_no = data.nomor_sc;
@@ -1189,6 +1271,32 @@
              this.$vuetify.goTo('#form_customer')
            }
         },
+
+        async uploadFile() {
+          if (!this.file) {
+            alert('Please select a file to upload.');
+            return;
+          } else {
+            const formData = new FormData();
+            formData.append('file', this.file);
+            formData.append('name', 'sales_contract_doc');
+            formData.append('location', 'sales_contracts');
+            formData.append('sc_id', this.selected_sc);
+
+            try {
+              const response = await this.$axios.post('/sales_contract/upload-sc', formData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+              });
+              console.log(response.data);
+              this.file = null;
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        },
+
         async exportToPDF(id) {
           this.close_form_page();
           this.clear_form();
@@ -1216,7 +1324,8 @@
           let fetch_sc = await this.show_sales_contract(id, 'export');
           if(fetch_sc){
             this.$axios.post('/download-pdf',{id : id, tipe : 'sc'},{ responseType: 'blob' })
-                .then(response => {                 
+                .then(response => {
+
                     // Create a Blob object from the response data
                     if (Capacitor.getPlatform() === 'android') {
                       // Android-specific handling
@@ -1268,8 +1377,8 @@
                     console.log(error);
                     this.loading_rekap = false;
                 })
-          }
-        },
+              }
+          },
         AddProduct(){
            this.products.push(
               {
@@ -1280,7 +1389,10 @@
                 harga_rp: '',
                 harga:'',
                 total_rp: '',
+                keterangan: '',
                 total: '',
+                satuan_qty: 'kg',
+                satuan_lenght: 'cm',
               }, 
            )
         },
