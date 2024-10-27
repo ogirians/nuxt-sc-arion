@@ -193,6 +193,12 @@
             <template v-slot:item.tanggal_sc="{ item }">
               {{ item.tanggal_sc | tanggal_id }}
             </template>
+            <template v-slot:item.documents="{item}">
+               <!-- {{ item.sc_dokumen_id ? item.document.name : '-' }} -->
+               <a :href="item.sc_dokumen_id ? item.document.file.show_file : '#'" target="_blank">
+                {{ item.sc_dokumen_id ? item.document.name : '-' }}
+              </a>
+            </template>
           
           </v-data-table>
           </v-card>
@@ -826,6 +832,7 @@
               value: 'invoiced',
           },
           { text: 'Actions', value: 'actions', sortable: false },
+          { text: 'Documents', value: 'documents', sortable: false }
          ],
          sc_id : '',
          open_sc_form : false,
@@ -1278,9 +1285,7 @@
             return;
           } else {
             const formData = new FormData();
-            formData.append('file', this.file);
-            formData.append('name', 'sales_contract_doc');
-            formData.append('location', 'sales_contracts');
+            formData.append('file', this.file);            
             formData.append('sc_id', this.selected_sc);
 
             try {
