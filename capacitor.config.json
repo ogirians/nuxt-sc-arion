@@ -1,0 +1,12 @@
+{
+  "appId": "arion.com",
+  "appName": "sc-arion",
+  "webDir": "dist",
+  "plugins": {
+    "Filesystem": {}
+  },
+  "server": {
+  "url": "https://generate.arionpancasekawan.com/",
+  "cleartext": true
+  }
+}

@@ -1,6 +1,6 @@
 <template>
   <v-app dark>
-    <v-navigation-drawer
+    <!-- <v-navigation-drawer
       v-model="drawer"
       :mini-variant="miniVariant"
       :clipped="clipped"
@@ -23,8 +23,8 @@
           </v-list-item-content>
         </v-list-item>
       </v-list>
-    </v-navigation-drawer>
-    <v-app-bar
+    </v-navigation-drawer> -->
+    <!-- <v-app-bar
       :clipped-left="clipped"
       fixed
       app
@@ -32,18 +32,73 @@
       <v-app-bar-nav-icon @click.stop="drawer = !drawer" />            
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />      
+    </v-app-bar> -->
+    <v-app-bar
+      :clipped-left="clipped"
+      fixed
+      app
+      elevation="0"
+      color="white"
+    >
+    <v-spacer />
+    <v-img
+        lazy-src="arion"
+        max-height="60"
+        max-width="60"
+        src="/arion.png"
+      ></v-img>
+    <v-spacer />
+    
     </v-app-bar>
-    <v-main>
-      <v-container>
+    <v-main class="mb-15" style="background-color: #f8fffd;">
+
+      <v-container class="px-0">
         <Nuxt />
+        
       </v-container>
+      
     </v-main>
-    <v-footer
+    <v-bottom-navigation
+      v-model="bottom"
+      :background-color="color"
+      shift
+      fixed
+      grow
+      color="#6da4ab"
+    >
+      <v-btn :to="items[0].to" grow style="height: 100%;">
+        <span>Contracts</span>
+        <v-icon>mdi-lead-pencil</v-icon>
+      </v-btn>
+
+      <v-btn :to="items[1].to" grow style="height: 100%;">
+        <span>Invoices</span>
+
+        <v-icon>mdi-calculator</v-icon>
+      </v-btn>
+      <v-btn :to="items[2].to" grow style="height: 100%;">
+        <span></span>
+        
+        <v-icon>mdi-home</v-icon>
+      </v-btn>
+      <v-btn :to="items[3].to" grow style="height: 100%;"> 
+        <span>Rekap</span>
+
+        <v-icon>mdi-book</v-icon>
+      </v-btn>
+
+      <v-btn :to="items[4].to" grow style="height: 100%;">
+        <span>Coming</span>
+
+        <v-icon>mdi-image</v-icon>
+      </v-btn>
+    </v-bottom-navigation>
+    <!-- <v-footer
       :absolute="!fixed"
       app
     >
       <span>&copy; {{ new Date().getFullYear() }}</span>
-    </v-footer>
+    </v-footer> -->
   </v-app>
 </template>
 
@@ -62,16 +117,23 @@ export default {
       clipped: false,
       drawer: false,
       fixed: false,
+      bottom : 0,
       items: [
         {
           icon: 'mdi-apps',
           title: 'generate sales contract',
-          to: '/'
+          to: '/sales_contract'
         },
+        
         {
           icon: 'mdi-apps',
           title: 'generate Invoice',
           to: '/invoice'
+        },
+        {
+          icon: 'mdi-apps',
+          title: 'generate sales contract',
+          to: '/'
         },
         {
           icon: 'mdi-apps',
@@ -89,6 +151,17 @@ export default {
       rightDrawer: false,
       title: 'Arion Panca Sekawan'
     }
-  }
+  },
+  computed: {
+      color () {
+        switch (this.bottom) {
+          case 0: return 'white'
+          case 1: return 'white'
+          case 2: return 'white'
+          case 3: return 'white'
+          default: return 'white'
+        }
+      },
+    },
 }
 </script>

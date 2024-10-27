@@ -5,6 +5,7 @@ export default {
   // target: 'static',
 
   // Global page headers: https://go.nuxtjs.dev/config-head
+  
   head: {
     titleTemplate: '%s - sc-arion',
     title: 'sc-arion',
@@ -51,11 +52,12 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: 'http://localhost:8005/api',
-    // baseURL: 'https://www.arionpancasekawan.com/api',
-    credentials: true,
+    baseURL: 'http://192.168.1.10:8005/api',
+    // baseURL: 'https://arionpancasekawan.com/api',
+    withCredentials: true,
     init(axios) {
-      axios.defaults.withCredentials = true
+      axios.defaults.withCredentials = true,
+      axios.defaults.withXSRFToken = true
     }
   },
 
@@ -65,10 +67,10 @@ export default {
     theme: {
       dark: false,
       themes: {
-        dark: {
-          primary: colors.blue.darken2,
+        light: {
+          primary: "#6da4ab",
           accent: colors.grey.darken3,
-          secondary: colors.amber.darken3,
+          secondary: "#a0adb5",
           info: colors.teal.lighten1,
           warning: colors.amber.base,
           error: colors.deepOrange.accent4,
@@ -85,5 +87,10 @@ export default {
   moment: {
     timezone: true,
     locales: ['id']
-  }
+  },
+
+  server: {
+    port: 3000, // default: 3000
+    host: '0.0.0.0', // default: localhost,
+  },
 }

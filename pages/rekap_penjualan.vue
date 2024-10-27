@@ -1,8 +1,15 @@
 <template>
     <v-container>
+       
         <v-card class="logo" color="primary" elevation="5">
-              <v-card-title>
-                  <span style="color:white" class="mr-5"> 
+            <v-img 
+                src="/card_background.jpg" 
+                max-height="200"
+                max-width="100%"
+                style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
+            </v-img>
+              <v-card-title style="height: 70px;">
+                  <span style="color:white ;position: absolute; z-index: 1;" class="mr-5"> 
                   REKAP PENJUALAN
                   </span>
                   <v-spacer></v-spacer>
@@ -96,6 +103,10 @@
 
 <script>
 import moment from 'moment';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
+
     export default {
         mounted(){
           this.get_rekap();
@@ -167,7 +178,57 @@ import moment from 'moment';
                 this.$axios.post('/export_penjualan',{tgl_awal : this.tgl_awal, tgl_akhir : this.tgl_akhir},{ responseType: 'blob' })
                 .then(response => {
                     
+                    
                     this.loading_rekap= false;
+
+                    if (Capacitor.getPlatform() === 'android') {
+                    // Android-specific handling
+                      console.log('Running on Android');
+                      
+                      // Convert Blob to base64
+                      const reader = new FileReader();
+                      reader.readAsDataURL(response.data);
+                      reader.onloadend = async () => {
+                        const base64Data = reader.result.split(',')[1];
+
+                        try {
+                          // Write the file
+                          const pdfFile = await Filesystem.writeFile({
+                            path: 'secrets/rekap_'+this.$moment().format('YYYY-MM-DD')+'.xls',
+                            data: base64Data,
+                            directory: Directory.External,
+                            recursive: true,
+                          });
+
+                          // Open the file
+                          await FileOpener.open({
+                            filePath: pdfFile.uri,
+                            openWithDefault: true,
+                          });
+                          console.log('File opened successfully');
+                        } catch (e) {
+                          console.error(`Unable to open file: ${e.message}`);
+                        }
+                      };
+
+                    } else if (Capacitor.getPlatform() === 'web') {
+                      // Web-specific handling
+                      console.log('Running on a web');
+                      
+                      // Create a Blob object from the response data
+                      const blob = new Blob([response.data], { type: 'application/pdf' });
+                      // Create a temporary URL for the Blob
+                      const url = window.URL.createObjectURL(blob);
+                      // Create a link element and simulate a click to trigger the download
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', 'rekap_'+this.$moment().format('YYYY-MM-DD')+'.xls'); // Set the filename
+                      document.body.appendChild(link);
+                      link.click();
+                      // Cleanup
+                      window.URL.revokeObjectURL(url);
+
+                    }
                     // Create a Blob object from the response data
                     const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                     // Create a temporary URL for the Blob

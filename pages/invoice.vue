@@ -1,8 +1,89 @@
 <template>
     <v-container>
+      <v-app-bar
+        fixed
+        app
+        elevation="0"
+        color="white"
+        class="pa-0"
+        :height="height"
+        style="margin-top: 55px"
+        :hide-on-scroll="hide_bar"
+      > 
+        <v-container> 
+          <v-row class="mt-3">
+              <v-col cols="12" md="4" class="py-0">
+                <v-text-field
+                  v-model="search_invoice"
+                  label="Cari nama atau nomor sales contract..."
+                  prepend-inner-icon="mdi-magnify"
+                  class="mx-4 py-0"
+                  outlined
+                  dense
+                  clearable
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="4" class="py-0">
+                <v-dialog
+                  ref="dialog2"
+                  v-model="modal2"
+                  :return-value.sync="date_invoice_search"
+                  persistent
+                  width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs2 }">
+                    <v-text-field            
+                      v-model="date_invoice_search"
+                      label="tanggal_sc"
+                      prepend-inner-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs2"
+                      v-on="on"
+                      dense
+                      outlined
+                      class="mx-4 py-0"
+                      clearable
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="date_invoice_search"
+                    scrollable          
+                  >
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="modal2 = false"
+                    >
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="$refs.dialog2.save(date_invoice_search)"
+                    >
+                      OK
+                    </v-btn>
+                  </v-date-picker>
+                </v-dialog>
+              </v-col>
+              <v-col cols="12" md="4" class="py-0 mb-0">
+                <v-btn @click="search_invoice_func()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
+                  cari
+                </v-btn>
+              </v-col>
+          </v-row>
+        </v-container>
+      </v-app-bar>
       <v-card class="logo" color="primary" elevation="5">
+          <v-img 
+              src="/card_background.jpg" 
+              max-height="100"
+              max-width="100%"
+              style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
+          </v-img>
           <v-card-title>
-              <span style="color:white" class="mr-5"> 
+              <span style="color:white; position: absolute; z-index: 1;" class="mr-5"> 
               RIWAYAT INVOICE
               </span>
               <v-spacer></v-spacer>
@@ -33,68 +114,7 @@
             >
             <!-- :mobile-breakpoint="0"  to disbale vertical row -->
             <template v-slot:top="{ item }">
-              <v-row class="mt-3">
-                <v-col cols="12" md="4" class="py-0">
-                  <v-text-field
-                    v-model="search_invoice"
-                    label="Cari nama atau nomor sales contract..."
-                    prepend-inner-icon="mdi-magnify"
-                    class="mx-4 py-0"
-                    outlined
-                    dense
-                    clearable
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="4" class="py-0">
-                  <v-dialog
-                    ref="dialog2"
-                    v-model="modal2"
-                    :return-value.sync="date_invoice_search"
-                    persistent
-                    width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs2 }">
-                      <v-text-field            
-                        v-model="date_invoice_search"
-                        label="tanggal_sc"
-                        prepend-inner-icon="mdi-calendar"
-                        readonly
-                        v-bind="attrs2"
-                        v-on="on"
-                        dense
-                        outlined
-                        class="mx-4 py-0"
-                        clearable
-                      ></v-text-field>
-                    </template>
-                    <v-date-picker
-                      v-model="date_invoice_search"
-                      scrollable          
-                    >
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="modal2 = false"
-                      >
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="$refs.dialog2.save(date_invoice_search)"
-                      >
-                        OK
-                      </v-btn>
-                    </v-date-picker>
-                  </v-dialog>
-                </v-col>
-                <v-col cols="12" md="4" class="py-0 mb-3">
-                  <v-btn @click="search_invoice_func()" elevation="0" color="info" class="ml-3 mb-3 mt-1">
-                    cari
-                  </v-btn>
-                </v-col>
-              </v-row>
+              
               <v-divider></v-divider>
               <v-dialog v-model="dialog_delete_invoice" max-width="500px">
                 <v-card>
@@ -109,23 +129,43 @@
               </v-dialog>
             </template>
             <template v-slot:item.actions="{ item }">
+             <v-menu
+                top
+                :offset-x="true"
+                rounded="lg"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-chip
+                    color="primary"
+                    dark
+                    v-bind="attrs"
+                    v-on="on"
+                    x-small
+                    class="mr-2"
+                  >
+                  <v-icon
+                    small
+                    class="mr-2"
+                    color="white"
+                    
+                  >
+                    mdi-file-pdf-box
+                  </v-icon>
+                  inv
+                  </v-chip>
+                </template>
+
+                <v-list>
+                  <v-list-item                  >
+                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice')">with stamp</v-list-item-title>
+                  </v-list-item>
+                  <v-divider />
+                  <v-list-item>
+                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice-x')">no stamp</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
               
-              <v-chip
-                class="mr-2"
-                x-small
-                color="warning"
-                @click="exportToPDF_api(item.id, 'invoice')"
-              >
-               <v-icon
-                small
-                class="mr-2"
-                color="white"
-                
-              >
-                mdi-file-pdf-box
-              </v-icon>
-                inv
-              </v-chip>
 
               <v-chip
                 class="mr-2"
@@ -143,6 +183,24 @@
               </v-icon>
                  sj
               </v-chip>
+
+              <v-chip
+                class="mr-2"
+                x-small
+                color="cyan"
+                dark
+                @click="isAddingMemo = true; memoToDownload = item.id"
+              >
+                <v-icon
+                small
+                class="mr-2"
+                color="white"
+                
+              >
+                mdi-file-pdf-box
+              </v-icon>
+                 mm
+              </v-chip>
               <!-- <v-icon
                 small
                 class="mr-2"
@@ -158,14 +216,14 @@
               >
                 mdi-delete
               </v-icon>
-              <v-icon
+              <!-- <v-icon
                 small
                 class="mr-2"
                 :color="(item.id == selected_inv) ? 'success' : 'secondary'"
                 @click="preview_func(item.id)"
               >
                 mdi-eye
-              </v-icon>
+              </v-icon> -->
             </template>
             <template v-slot:item.sales_contract.total ="{ item }">
               {{ item.sales_contract.total | rupiah }}
@@ -325,6 +383,185 @@
               </v-card-actions>          
             </v-card>
           </v-overlay>
+          <v-overlay
+            :absolute="false"
+            :value="isAddingMemo"
+          >
+            <v-card 
+              max-height="400px"
+              light
+            >
+              <v-card-title>Info tambahan: </v-card-title>
+              <v-divider></v-divider>
+              
+              <v-card max-height="200px" class="overflow-auto" elevation="0"> 
+                <div class="mx-4 mt-4">
+                tanggal memo :
+                </div>
+                <v-col cols="12" class="py-0">
+                    <v-dialog
+                      ref="dialog2"
+                      v-model="modal2"
+                      :return-value.sync="date_mm"
+                      persistent
+                      width="290px"
+                    >
+                      <template v-slot:activator="{ on, attrs2 }">
+                        <v-text-field            
+                          v-model="date_mm"
+                          placeholder="tanggal"
+                          prepend-inner-icon="mdi-calendar"
+                          readonly
+                          v-bind="attrs2"
+                          v-on="on"
+                          dense
+                          outlined
+                          class="mt-3 py-0"
+                          clearable
+                        ></v-text-field>
+                      </template>
+                      <v-date-picker
+                        v-model="date_mm"
+                        scrollable          
+                      >
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="modal2 = false"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          text
+                          color="primary"
+                          @click="$refs.dialog2.save(date_mm)"
+                        >
+                          OK
+                        </v-btn>
+                      </v-date-picker>
+                  </v-dialog>
+                </v-col> 
+                <div class="mx-4 mt-2">
+                Suplier :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="mm_supplier"
+                      placeholder="nama suplier"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-2">
+                Alamat suplier :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="mm_alamat_supplier"
+                      placeholder="alamat"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-2">
+                Keterangan :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="keterangan"
+                      placeholder="keteranngan"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-0">
+                Sopir :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="sopir"
+                      placeholder="sopir"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+                <div class="mx-4 mt-0">
+                Nopol :
+                </div> 
+                <v-col
+                  class="d-flex pb-0"
+                  cols="12"
+                >
+                  <v-text-field
+                      v-model="nopol"
+                      placeholder="nopol"
+                      dense
+                      outlined
+                      class="mt-0 py-0"
+                      clearable
+                  >
+                  </v-text-field>
+                </v-col>
+              </v-card>
+              <v-divider></v-divider>
+              <v-card-actions class="d-flex justify-end">            
+                <v-btn
+                  small
+                  class=""
+                  :width="60"
+                  color="error"
+                  @click="isAddingMemo = false; clear_form_memo()"
+                  :disabled="loading_simpan"
+                >
+                  <div>batal</div>                
+                </v-btn>
+                <v-btn
+                  small
+                  class=""
+                  :width="60"
+                  color="success"
+                  @click="exportToPDF_api(memoToDownload, 'memo'); isAddingMemo = false;"
+                  :disabled="loading_simpan"
+                  v-if="isEditingInvoice == false"            
+                >
+                  <div v-if="loading_simpan == false"><v-icon>mdi-download</v-icon></div>
+                  <div v-else>
+                    <v-progress-circular
+                        indeterminate
+                        color="white"
+                        
+                        :size="20"
+                      ></v-progress-circular>
+                  </div>
+                </v-btn>              
+              </v-card-actions>          
+            </v-card>
+          </v-overlay>
         </v-container>    
       </v-card>      
     </v-container>
@@ -332,6 +569,9 @@
 
 <script>
 import moment from 'moment';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
 
     export default {
         mounted(){
@@ -341,9 +581,12 @@ import moment from 'moment';
         },
         created(){
           this.date_invoice = this.$moment().format('YYYY-MM-DD');
+          this.date_mm = this.$moment().format('YYYY-MM-DD');
         },
         data(){
           return {
+              mm_supplier : '',
+              mm_alamat_supplier: '',
               selected_inv : '',
               preview_pdf : false,
               mode : 'invoice',
@@ -374,6 +617,7 @@ import moment from 'moment';
               search_sc : '', 
               selected_sc : '',
               isAddingInvoice : false,
+              isAddingMemo: false,
               loading_invoice : false,
               pagination: {
                     page: 1, // Current page
@@ -415,15 +659,38 @@ import moment from 'moment';
               ],
               search_sc : '',                     
               date_invoice : '',
+              date_mm : '',
               date_sc : '',
               modal2 : false,
               item_invoice : [],
               items_sc : [],
               sortBy : '',
               sortDesc: false,
+              keterangan:'',
+              sopir:'',
+              nopol:'',
+              memoToDownload: ''
           }
         },
         computed : {
+          height () {
+            switch (this.$vuetify.breakpoint.name) {
+              case 'xs': return 200
+              case 'sm': return 200
+              case 'md': return 75
+              case 'lg': return 75
+              case 'xl': return 75
+            }
+          },
+          hide_bar () {
+            switch (this.$vuetify.breakpoint.name) {
+              case 'xs': return true
+              case 'sm': return true
+              case 'md': return false
+              case 'lg': return false
+              case 'xl': return false
+            }
+          },
           form_invoice() {
             const form = {
               sales_contract_id  : this.selected_sc,
@@ -432,8 +699,27 @@ import moment from 'moment';
 
             return form
           },
+          form_mm() {
+            const form = {
+              keterangan  : this.keterangan,
+              sopir : this.sopir,
+              nopol : this.nopol,
+              nama_supplier : this.mm_supplier,
+              alamat_supplier : this.mm_alamat_supplier,
+              tanggal_berangkat : this.date_mm
+            }
+
+            return form
+          },
         },  
         methods :  {
+          clear_form_memo(){
+            this.mm_supplier = '';
+            this.mm_alamat_supplier = '';
+            this.keterangan = '';
+            this.sopir = '';
+            this.nopol = '';
+          },
           wait(ms) {
             return new Promise(resolve => {
               setTimeout(resolve, ms);
@@ -480,16 +766,61 @@ import moment from 'moment';
             }
           },
           async exportToPDF_api(id,doc) {
+            let tipe = '';
+            let stamp = true;
             if (doc == 'sj'){
-              this.mode = 'sj'
+              tipe = 'sj';
             } 
             if (doc == 'invoice'){
-              this.mode = 'inv'
+              tipe = 'inv';
+            } 
+            if (doc == 'invoice-x'){
+              tipe = 'inv';
+              stamp = false;
+            } 
+            if (doc == 'memo'){
+              tipe = 'mm';
             } 
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
-              this.$axios.post('/download-pdf',{id : id, tipe : this.mode},{ responseType: 'blob' })
-                  .then(response => {                 
+              this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
+                  .then(response => {   
+                    
+                    if (Capacitor.getPlatform() === 'android') {
+                    // Android-specific handling
+                      console.log('Running on Android');
+                      
+                      // Convert Blob to base64
+                      const reader = new FileReader();
+                      reader.readAsDataURL(response.data);
+                      reader.onloadend = async () => {
+                        const base64Data = reader.result.split(',')[1];
+
+                        try {
+                          // Write the file
+                          const pdfFile = await Filesystem.writeFile({
+                            path: 'secrets/'+tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
+                            data: base64Data,
+                            directory: Directory.External,
+                            recursive: true,
+                          });
+
+                          // Open the file
+                          await FileOpener.open({
+                            filePath: pdfFile.uri,
+                            openWithDefault: true,
+                          });
+                          console.log('File opened successfully');
+                        } catch (e) {
+                          console.error(`Unable to open file: ${e.message}`);
+                        }
+                      };
+                      this.clear_form_memo()
+
+                    } else if (Capacitor.getPlatform() === 'web') {
+                      // Web-specific handling
+                      console.log('Running on a web');
+                      
                       // Create a Blob object from the response data
                       const blob = new Blob([response.data], { type: 'application/pdf' });
                       // Create a temporary URL for the Blob
@@ -497,11 +828,16 @@ import moment from 'moment';
                       // Create a link element and simulate a click to trigger the download
                       const link = document.createElement('a');
                       link.href = url;
-                      link.setAttribute('download', 'sales_contract.pdf'); // Set the filename
+                      link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf'); // Set the filename
                       document.body.appendChild(link);
                       link.click();
                       // Cleanup
                       window.URL.revokeObjectURL(url);
+
+                      this.clear_form_memo()
+
+                    }
+                     
                   })
                   .catch(error => {
                       console.log(error);
@@ -664,7 +1000,7 @@ import moment from 'moment';
           delete_invoice() {
             this.$axios.delete('/invoice/'+this.invoice_id_todelete)
             .then(response => {
-              this.dialog_delete_invoice = false;
+              this.dialog_delete_invoice = false;  
               this.item_invoice = [];
               this.get_invoice();
               console.log('berhasil hapus')
@@ -703,7 +1039,7 @@ import moment from 'moment';
                 
                 console.log(sales_contract);
                   this.form_sc.sc_id             = sales_contract.id;
-                  this.form_sc.date              = sales_contract.tangga_sc;
+                  this.form_sc.date              = response.data.data.tanggal_invoice;
                   this.form_sc.customer          = data_customer;
                   this.form_sc.customer_json     = data_customer;
                   this.form_sc.products          = sales_contract.item;
