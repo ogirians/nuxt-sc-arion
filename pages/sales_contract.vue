@@ -195,7 +195,7 @@
             </template>
             <template v-slot:item.documents="{item}">
                <!-- {{ item.sc_dokumen_id ? item.document.name : '-' }} -->
-               <a :href="item.sc_dokumen_id ? item.document.file.show_file : '#'" target="_blank">
+               <a @click="download_file(item.document.file.id)">
                 {{ item.sc_dokumen_id ? item.document.name : '-' }}
               </a>
             </template>
@@ -787,6 +787,7 @@
     },
     data(){
       return {
+         baseUrl : process.env.baseURL,
          file : null,
          isAddingFile : false,
          isEditing : false,
@@ -1080,6 +1081,23 @@
               })
            }
         },
+        async download_file(file_id) {
+          try {
+            const response = await this.$axios.get('/download/'+file_id, {
+              responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'file.pdf'); // Change the file name and extension as needed
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          } catch (error) {
+            console.error('Error downloading the file:', error);
+          }
+        },
+
         get_sales_contract() {
             // let addno = [];
             this.loading_sc = true;
