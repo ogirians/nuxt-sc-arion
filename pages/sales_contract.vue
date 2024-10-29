@@ -195,9 +195,32 @@
             </template>
             <template v-slot:item.documents="{item}">
                <!-- {{ item.sc_dokumen_id ? item.document.name : '-' }} -->
-               <a @click="download_file(item.document.file.id)">
-                {{ item.sc_dokumen_id ? item.document.name : '-' }}
-              </a>
+              <div v-if="item.sc_dokumen_id ">
+                <a  @click="download_file(item.document.file.id)">
+                    Unduh
+                    <v-icon
+                    class="mr-2"
+                    small
+                    color="secondary"
+                    >
+                    mdi-download
+                  </v-icon>
+                </a>
+                |
+                <a>
+                  <v-icon
+                    small
+                    color="error"
+                    @click="delete_file(item.id)"
+                  >
+                    mdi-delete
+                  </v-icon>
+                </a>
+              </div>              
+              
+              <div v-else>
+                -  
+              </div>
             </template>
           
           </v-data-table>
@@ -1097,6 +1120,18 @@
             console.error('Error downloading the file:', error);
           }
         },
+        async delete_file(sc_id) {
+          try {
+            this.loading_sc = true;
+            // this.items_sc=[];
+            const response = await this.$axios.get('/delete_file_sc/'+sc_id);
+            this.search_sales_contract();
+            console.log(response);
+            this.loading_sc = false;
+          } catch (error) {
+            console.error('Error deleting the file:', error);
+          }
+        },
 
         get_sales_contract() {
             // let addno = [];
@@ -1302,10 +1337,11 @@
             alert('Please select a file to upload.');
             return;
           } else {
+
             const formData = new FormData();
             formData.append('file', this.file);            
             formData.append('sc_id', this.selected_sc);
-
+            this.loading_sc = true;
             try {
               const response = await this.$axios.post('/sales_contract/upload-sc', formData, {
                 headers: {
@@ -1314,6 +1350,9 @@
               });
               console.log(response.data);
               this.file = null;
+              this.search_sales_contract();
+              this.selected_sc = '';
+              // this.loading_sc = false;
             } catch (error) {
               console.error(error);
             }
