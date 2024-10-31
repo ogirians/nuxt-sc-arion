@@ -184,7 +184,7 @@
                  sj
               </v-chip>
 
-              <v-chip
+              <!-- <v-chip 
                 class="mr-2"
                 x-small
                 color="cyan"
@@ -199,8 +199,8 @@
               >
                 mdi-file-pdf-box
               </v-icon>
-                 mm
-              </v-chip>
+                 mm -->
+              <!-- </v-chip> -->
               <!-- <v-icon
                 small
                 class="mr-2"

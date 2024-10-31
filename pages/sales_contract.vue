@@ -150,7 +150,15 @@
                 small
                 class="mr-2"
                 color="warning"
-                @click="exportToPDF_api(item.id)"
+                @click="exportToPDF_api(item.id,'sc')"
+              >
+                mdi-file-pdf-box
+              </v-icon>
+              <v-icon
+                small
+                class="mr-2" 
+                color="blue"
+                @click="isAddingMemo = true; selected_sc = item.id"
               >
                 mdi-file-pdf-box
               </v-icon>
@@ -594,7 +602,7 @@
                           <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
                           <v-select
                             v-model="item.satuan_lenght"
-                            :items="['cm', 'kg', 'm2']"
+                            :items="['Cm', 'Kg', 'M']"
                             label="satuan"
                             persistent-hint
                             return-object
@@ -640,6 +648,20 @@
               </v-simple-table>
               <v-divider></v-divider>
               <table class="ma-5">
+                <tr>
+                  <td style="min-width: 150px;">Tipe Harga</td>
+                  <td>
+                    <v-select
+                      v-model="tipe_pembayaran"
+                      :items="['LOCO', 'FRANCO']"
+                      label="tipe"
+                      persistent-hint
+                      return-object
+                      single-line
+                      style="width: 150px;"
+                    ></v-select>
+                  </td>
+                </tr>
                 <tr>
                   <td style="min-width: 150px;">Ongkos Kirim</td>
                   <td>: {{ongkir | rupiah}}</td>
@@ -743,6 +765,14 @@
               >
                 simpan
               </v-btn>
+              <v-btn
+                small
+                class=""
+                color="error"
+                @click="isAddingFile = false;"
+              >
+                batal
+              </v-btn>
             </v-card-actions>          
           </v-card>
         </v-overlay>  
@@ -788,6 +818,184 @@
           </v-icon>
         </v-sheet>
       </v-overlay> 
+      <v-overlay
+        :absolute="false"
+        :value="isAddingMemo"
+      >
+        <v-card 
+          max-height="400px"
+          light
+        >
+          <v-card-title>Info tambahan: </v-card-title>
+          <v-divider></v-divider>
+          
+          <v-card max-height="200px" class="overflow-auto" elevation="0"> 
+            <div class="mx-4 mt-4">
+            tanggal memo :
+            </div>
+            <v-col cols="12" class="py-0">
+                <v-dialog
+                  ref="dialog2"
+                  v-model="modal2"
+                  :return-value.sync="date_mm"
+                  persistent
+                  width="290px"
+                >
+                  <template v-slot:activator="{ on, attrs2 }">
+                    <v-text-field            
+                      v-model="date_mm"
+                      placeholder="tanggal"
+                      prepend-inner-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs2"
+                      v-on="on"
+                      dense
+                      outlined
+                      class="mt-3 py-0"
+                      clearable
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model="date_mm"
+                    scrollable          
+                  >
+                    <v-spacer></v-spacer>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="modal2 = false"
+                    >
+                      Cancel
+                    </v-btn>
+                    <v-btn
+                      text
+                      color="primary"
+                      @click="$refs.dialog2.save(date_mm)"
+                    >
+                      OK
+                    </v-btn>
+                  </v-date-picker>
+              </v-dialog>
+            </v-col> 
+            <div class="mx-4 mt-2">
+            Suplier :
+            </div> 
+            <v-col
+              class="d-flex pb-0"
+              cols="12"
+            >
+              <v-text-field
+                  v-model="mm_supplier"
+                  placeholder="nama suplier"
+                  dense
+                  outlined
+                  class="mt-0 py-0"
+                  clearable
+              >
+              </v-text-field>
+            </v-col>
+            <div class="mx-4 mt-2">
+            Alamat suplier :
+            </div> 
+            <v-col
+              class="d-flex pb-0"
+              cols="12"
+            >
+              <v-text-field
+                  v-model="mm_alamat_supplier"
+                  placeholder="alamat"
+                  dense
+                  outlined
+                  class="mt-0 py-0"
+                  clearable
+              >
+              </v-text-field>
+            </v-col>
+            <div class="mx-4 mt-2">
+            Keterangan :
+            </div> 
+            <v-col
+              class="d-flex pb-0"
+              cols="12"
+            >
+              <v-text-field
+                  v-model="keterangan"
+                  placeholder="keteranngan"
+                  dense
+                  outlined
+                  class="mt-0 py-0"
+                  clearable
+              >
+              </v-text-field>
+            </v-col>
+            <div class="mx-4 mt-0">
+            Sopir :
+            </div> 
+            <v-col
+              class="d-flex pb-0"
+              cols="12"
+            >
+              <v-text-field
+                  v-model="sopir"
+                  placeholder="sopir"
+                  dense
+                  outlined
+                  class="mt-0 py-0"
+                  clearable
+              >
+              </v-text-field>
+            </v-col>
+            <div class="mx-4 mt-0">
+            Nopol :
+            </div> 
+            <v-col
+              class="d-flex pb-0"
+              cols="12"
+            >
+              <v-text-field
+                  v-model="nopol"
+                  placeholder="nopol"
+                  dense
+                  outlined
+                  class="mt-0 py-0"
+                  clearable
+              >
+              </v-text-field>
+            </v-col>
+          </v-card>
+          <v-divider></v-divider>
+          <v-card-actions class="d-flex justify-end">            
+            <v-btn
+              small
+              class=""
+              :width="60"
+              color="success"
+              @click="exportToPDF_api(selected_sc, 'memo'); isAddingMemo = false;"
+              :disabled="loading_simpan"
+            >
+              <div v-if="loading_simpan == false"><v-icon>mdi-download</v-icon></div>
+              <div v-else>
+                <v-progress-circular
+                    indeterminate
+                    color="white"
+                    
+                    :size="20"
+                  ></v-progress-circular>
+              </div>
+            </v-btn>
+            <v-btn
+              small
+              class=""
+              :width="60"
+              color="error"
+              @click="isAddingMemo = false; clear_form_memo()"
+              :disabled="loading_simpan"
+            >
+              <div>batal</div>                
+            </v-btn>    
+          </v-card-actions>          
+        </v-card>
+      </v-overlay>
     </v-container>
   </template>
   
@@ -810,6 +1018,13 @@
     },
     data(){
       return {
+         isAddingMemo : false,
+         mm_supplier : '',
+         mm_alamat_supplier : '',
+         keterangan : '',
+         sopir : '',
+         nopol : '',
+         date_mm : '',
          baseUrl : process.env.baseURL,
          file : null,
          isAddingFile : false,
@@ -915,10 +1130,23 @@
         grand_total_rp : '0',
         grand_total_qty : 0,
         ongkir:0,
-        sales_contract : ''
+        sales_contract : '',
+        tipe_pembayaran : 'LOCO'
       } 
     },
     computed: {
+        form_mm() {
+          const form = {
+            keterangan  : this.keterangan,
+            sopir : this.sopir,
+            nopol : this.nopol,
+            nama_supplier : this.mm_supplier,
+            alamat_supplier : this.mm_alamat_supplier,
+            tanggal_berangkat : this.date_mm
+          }
+
+          return form
+        },
         height () {
           switch (this.$vuetify.breakpoint.name) {
             case 'xs': return 200
@@ -951,6 +1179,7 @@
              ongkir : this.ongkir,
              sales_contract_no : this.sales_contract_no,
              customer_id : this.customer.customer_id,
+             tipe_pembayaran : this.tipe_pembayaran
           }
           return form;
        },
@@ -1006,6 +1235,13 @@
       }
     },
     methods: {
+        clear_form_memo(){
+          this.mm_supplier = '';
+          this.mm_alamat_supplier = '';
+          this.keterangan = '';
+          this.sopir = '';
+          this.nopol = '';
+        },
         handleFileUpload(file) {
             console.log(file)
             this.file = file;
@@ -1123,7 +1359,7 @@
         async delete_file(sc_id) {
           try {
             this.loading_sc = true;
-            // this.items_sc=[];
+            this.items_sc=[];
             const response = await this.$axios.get('/delete_file_sc/'+sc_id);
             this.search_sales_contract();
             console.log(response);
@@ -1352,7 +1588,7 @@
               this.file = null;
               this.search_sales_contract();
               this.selected_sc = '';
-              // this.loading_sc = false;
+              this.loading_sc = false;
             } catch (error) {
               console.error(error);
             }
@@ -1380,67 +1616,91 @@
             // do something for any other platform
           }
         },
-        async exportToPDF_api(id) {
+        async exportToPDF_api(id,doc) {
           this.close_form_page();
           this.clear_form();
           let fetch_sc = await this.show_sales_contract(id, 'export');
+          let tipe = '';
+          let stamp = true;
+          if (doc == 'sj'){
+              tipe = 'sj';
+            } 
+          if (doc == 'invoice'){
+            tipe = 'inv';
+          } 
+          if (doc == 'invoice-x'){
+            tipe = 'inv';
+            stamp = false;
+          } 
+          if (doc == 'memo'){
+            tipe = 'mm';
+          } 
+          if (doc == 'sc'){
+            tipe = 'sc';
+          } 
           if(fetch_sc){
-            this.$axios.post('/download-pdf',{id : id, tipe : 'sc'},{ responseType: 'blob' })
-                .then(response => {
+            this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
+              .then(response => {   
+                
+                if (Capacitor.getPlatform() === 'android') {
+                // Android-specific handling
+                  console.log('Running on Android');
+                  
+                  // Convert Blob to base64
+                  const reader = new FileReader();
+                  reader.readAsDataURL(response.data);
+                  reader.onloadend = async () => {
+                    const base64Data = reader.result.split(',')[1];
 
-                    // Create a Blob object from the response data
-                    if (Capacitor.getPlatform() === 'android') {
-                      // Android-specific handling
-                      console.log('Running on Android');
-                      
-                      // Convert Blob to base64
-                      const reader = new FileReader();
-                      reader.readAsDataURL(response.data);
-                      reader.onloadend = async () => {
-                        const base64Data = reader.result.split(',')[1];
-  
-                        try {
-                          // Write the file
-                          const pdfFile = await Filesystem.writeFile({
-                            path: 'secrets/sales_contract_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
-                            data: base64Data,
-                            directory: Directory.External,
-                            recursive: true,
-                          });
-  
-                          // Open the file
-                          await FileOpener.open({
-                            filePath: pdfFile.uri,
-                            openWithDefault: true,
-                          });
-                          console.log('File opened successfully');
-                        } catch (e) {
-                          console.error(`Unable to open file: ${e.message}`);
-                        }
-                      };
-  
-                    } else if (Capacitor.getPlatform() === 'web') {
-                      // Web-specific handling
-                      console.log('Running on a web');
-                      
-                      // Create a Blob URL and trigger download
-                      const blob = new Blob([response.data], { type: 'application/pdf' });
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.setAttribute('download','sales_contract_'+this.$moment().format('YYYY-MM-DD')+'.pdf');
-                      document.body.appendChild(link);
-                      link.click();
-                      window.URL.revokeObjectURL(url);
-                      link.remove();
+                    try {
+                      // Write the file
+                      const pdfFile = await Filesystem.writeFile({
+                        path: 'secrets/'+tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
+                        data: base64Data,
+                        directory: Directory.External,
+                        recursive: true,
+                      });
+
+                      // Open the file
+                      await FileOpener.open({
+                        filePath: pdfFile.uri,
+                        openWithDefault: true,
+                      });
+                      console.log('File opened successfully');
+                    } catch (e) {
+                      console.error(`Unable to open file: ${e.message}`);
                     }
-                })
-                .catch(error => {
-                    console.log(error);
-                    this.loading_rekap = false;
-                })
-              }
-          },
+                  };
+                  this.clear_form_memo()
+
+                } else if (Capacitor.getPlatform() === 'web') {
+                  // Web-specific handling
+                  console.log('Running on a web');
+                  
+                  // Create a Blob object from the response data
+                  const blob = new Blob([response.data], { type: 'application/pdf' });
+                  // Create a temporary URL for the Blob
+                  const url = window.URL.createObjectURL(blob);
+                  // Create a link element and simulate a click to trigger the download
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf'); // Set the filename
+                  document.body.appendChild(link);
+                  link.click();
+                  // Cleanup
+                  window.URL.revokeObjectURL(url);
+
+                  this.clear_form_memo()
+
+                }
+                  
+              })
+              .catch(error => {
+                  console.log(error);
+                  this.loading_rekap = false;
+              })
+          }
+        },
         AddProduct(){
            this.products.push(
               {
