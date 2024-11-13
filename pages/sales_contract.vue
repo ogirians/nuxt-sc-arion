@@ -235,7 +235,11 @@
           </v-card>
         </v-container>    
       </v-card>
-  
+      <v-alert
+        dismissible
+        type="error"
+        v-model="isErrorEdit_sc"
+      >Silahkan Hapus Invoice terlebih dahulu.</v-alert>
       <v-card class="logo" color="primary" elevation="5" :loading="loading_open_form">
           <v-img 
               src="/card_background.jpg" 
@@ -243,7 +247,7 @@
               max-width="100%"
               style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
           </v-img>
-          <v-card-title>
+          <v-card-title class="py-7">
               <span style="color:white; position: absolute; z-index: 1;" class="mr-5"> 
                 SALES CONTRACT
               </span>
@@ -602,7 +606,7 @@
                           <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
                           <v-select
                             v-model="item.satuan_lenght"
-                            :items="['Cm', 'Kg', 'M']"
+                            :items="['Cm', 'Kg', 'Mtr']"
                             label="satuan"
                             persistent-hint
                             return-object
@@ -1018,6 +1022,7 @@
     },
     data(){
       return {
+         isErrorEdit_sc : false,
          isAddingMemo : false,
          mm_supplier : '',
          mm_alamat_supplier : '',
@@ -1408,6 +1413,7 @@
           return new Promise( resolve => {
             this.clear_form();
             if (action == 'edit'){
+             
               this.open_sc_form = true;
               this.loading_open_form = true;
               this.$vuetify.goTo('#tambah_sc')
@@ -1417,29 +1423,51 @@
             .then(response => {
               // console.log(response.data.data);
               var data = response.data.data;
-              this.sc_id = data.id;
-              this.date = data.tanggal_sc;
-              this.customer = {
-                nama : data.customer.name,
-                npwp :   data.customer.npwp,
-                alamat:  data.customer.alamat,
-                alamat_pengambilan:  data.alamat_pengambilan,
-                customer_id:  data.customer.id
-              };
-              //insert data product
-              data.item.forEach(x => {
-                 x.harga_rp = this.convert_rupiah(x.harga);
-                 x.total = x.qty * x.harga;
-                 x.total_rp = this.convert_rupiah(x.total);
-                 this.products.push(x);
-                 x.satuan_qty = x.satuan_qty ? x.satuan_qty : 'kg' 
-                 x.satuan_lenght = x.satuan_lenght ? x.satuan_lenght : 'kg' 
+              
+              // console.log(data.item.some(x => {x.invoiced === true}));
+             
+              // check if there are item already invoiced
+              let status_item_invoiced = false;
+              data.item.forEach(item => {
+                  console.log(item.invoiced);
+                  if(item.invoiced === 1) {
+                    status_item_invoiced = true;
+                  }
+                
               });
-              this.ongkir = data.ongkir;
-              this.sales_contract_no = data.nomor_sc;
-              this.customer.customer_id = data.customer.id;
-              this.loading_open_form = false;
-              resolve(true);
+              console.log(status_item_invoiced);
+              if((data.invoiced == true || status_item_invoiced == true) && action  == 'edit'){
+                  resolve(false);
+                  // alert('silahkah hapus dulu invoice nya.');
+                  this.open_sc_form = false;
+                  this.loading_open_form = false;
+                  this.isEditing = false;
+                  this.isErrorEdit_sc = true;
+              }else{
+                this.sc_id = data.id;
+                this.date = data.tanggal_sc;
+                this.customer = {
+                  nama : data.customer.name,
+                  npwp :   data.customer.npwp,
+                  alamat:  data.customer.alamat,
+                  alamat_pengambilan:  data.alamat_pengambilan,
+                  customer_id:  data.customer.id
+                };
+                //insert data product
+                data.item.forEach(x => {
+                   x.harga_rp = this.convert_rupiah(x.harga);
+                   x.total = x.qty * x.harga;
+                   x.total_rp = this.convert_rupiah(x.total);
+                   this.products.push(x);
+                   x.satuan_qty = x.satuan_qty ? x.satuan_qty : 'kg' 
+                   x.satuan_lenght = x.satuan_lenght ? x.satuan_lenght : 'kg' 
+                });
+                this.ongkir = data.ongkir;
+                this.sales_contract_no = data.nomor_sc;
+                this.customer.customer_id = data.customer.id;
+                this.loading_open_form = false;
+                resolve(true);
+              }
             })
             .catch(error => {
               console.log(error);

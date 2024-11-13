@@ -93,7 +93,7 @@
               </v-btn>
           </v-card-title>
       </v-card>
-      <v-card class="logo py-4 mb-10" elevation="5">   
+      <v-card class="logo mb-8" elevation="5">   
         <v-container>
           <v-card outlined>
             <v-data-table
@@ -225,8 +225,8 @@
                 mdi-eye
               </v-icon> -->
             </template>
-            <template v-slot:item.sales_contract.total ="{ item }">
-              {{ item.sales_contract.total | rupiah }}
+            <template v-slot:item.total_invoice ="{ item }">
+              {{ item.total_invoice | rupiah }}
             </template>
             <template v-slot:item.tanggal_invoice="{ item }">
               {{ item.tanggal_invoice | tanggal_id }}
@@ -248,7 +248,7 @@
               
               light
             >
-              <v-card-title v-if="isEditingInvoice == false">tambah invoice: </v-card-title>
+              <v-card-title v-if="isEditingInvoice == false">Sales Contract: </v-card-title>
               <v-card-title v-else>edit invoice: </v-card-title>
               <v-divider></v-divider>
               <div class="mx-4 mt-2">
@@ -347,11 +347,11 @@
                   class=""
                   :width="60"
                   color="success"
-                  @click="simpan_invoice()"
+                  @click="pilih_item_invoice()"
                   :disabled="loading_simpan"
                   v-if="isEditingInvoice == false"            
                 >
-                  <div v-if="loading_simpan == false">simpan</div>
+                  <div v-if="loading_simpan == false">Tampilkan</div>
                   <div v-else>
                     <v-progress-circular
                         indeterminate
@@ -563,7 +563,53 @@
             </v-card>
           </v-overlay>
         </v-container>    
-      </v-card>      
+      </v-card>
+      <v-card class="logo" color="primary" elevation="5" v-if="show_items_sc_detail">
+          <v-img 
+              src="/card_background.jpg" 
+              max-height="100"
+              max-width="100%"
+              style="position: absolute; top: 0px; right: 0px; opacity: 0.2; border-radius:10px">
+          </v-img>
+          <v-card-title class="">
+              <span style="color:white; position: absolute; z-index: 1;" class="mr-5"> 
+              TAMBAH ke INVOICE - {{selected_no_sc}}
+              </span>
+              <v-spacer></v-spacer>
+              <v-btn small rounded color="error" class="mr-3" @click="clear_item_form()">
+                <v-icon small>mdi-close</v-icon>
+                <span v-if="$vuetify.breakpoint.name == 'md'">clear</span>
+              </v-btn>
+          </v-card-title>
+      </v-card>
+
+      <div id="tambah_item_invoice"></div>
+      <v-card class="logo py-4 mb-10" elevation="5" v-if="show_items_sc_detail">      
+        <v-container>
+          <v-card outlined>
+            <v-data-table
+              :headers="headers_inv_item"
+              :items="items_sc_detail"
+              class="elevation-1"
+              hide-default-footer
+              :loading = "loading_simpan"
+            >
+              <template v-slot:item.checklist="{ item }">
+                <!-- <v-simple-checkbox
+                   v-model="item.checklist"
+                ></v-simple-checkbox> -->
+                <input type="checkbox" v-model="checklist_sc" :value ="item.id"></input>
+              </template>
+            </v-data-table>
+          </v-card>
+          <div class="d-flex justify-end">
+            <v-btn @click="simpan_invoice()" :disabled="loading_simpan" class="mt-3" color="success">
+              simpan
+            </v-btn>
+          </div>
+        </v-container>
+      </v-card>
+      <!-- <div v-for="item in selected_sc_item">{{ item.id }}</div> -->
     </v-container>
 </template>
 
@@ -576,7 +622,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
     export default {
         mounted(){
           this.html2pdf = require('html2pdf.js');
-          this.get_invoice();
+          this.search_invoice_func();
           // this.get_sales_contract();
         },
         created(){
@@ -585,6 +631,9 @@ import { FileOpener } from '@capacitor-community/file-opener';
         },
         data(){
           return {
+              show_items_sc_detail : false,
+              checklist_sc : [],
+              selected_sc_item : '', 
               mm_supplier : '',
               mm_alamat_supplier: '',
               selected_inv : '',
@@ -624,6 +673,17 @@ import { FileOpener } from '@capacitor-community/file-opener';
                     itemsPerPage: 5,
                     itemsLength:0, // Number of items per page
                   },
+              headers_inv_item: [
+                        { text: 'Jenis Barang'    , value: 'jenis_barang' },
+                        { text: 'Code Coil'       , value: 'code_coil' },
+                        { text: 'Qty'             , value: 'qty' },
+                        { text: 'Length'          , value: 'total_mtr' },
+                        { text: 'Harga'           , value: 'harga' },
+                        { text: 'Keterangan'      , value: 'keterangan' },
+                        { text: 'checklist'       , value: 'checklist' },
+                  ],
+              items_sc_detail :[],
+              selected_no_sc : '',
               headers_sc : [
                   {
                       text: 'No',
@@ -635,7 +695,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       text: 'No sales contract',
                       align: 'start',
                       sortable: false,
-                      value: 'sales_contract.nomor_sc',
+                      value: 'nomor_invoice',
                   },
                   {
                       text: 'Nama Customoer',
@@ -653,7 +713,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       text: 'total contract',
                       align: 'start',
                       sortable: true,
-                      value: 'sales_contract.total',
+                      value: 'total_invoice',
                   },
                   { text: 'Actions', value: 'actions', sortable: false },
               ],
@@ -691,10 +751,13 @@ import { FileOpener } from '@capacitor-community/file-opener';
               case 'xl': return false
             }
           },
+         
           form_invoice() {
             const form = {
               sales_contract_id  : this.selected_sc,
-              tanggal_invoice : this.date_invoice
+              tanggal_invoice : this.date_invoice,
+              items : this.checklist_sc
+              // items : 
             }
 
             return form
@@ -713,6 +776,30 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
         },  
         methods :  {
+          clear_item_form(){
+              this.items_sc = [];
+              this.isAddingInvoice = false;
+              this.checklist_sc = [];
+              this.items_sc_detail = [];
+              this.show_items_sc_detail = false;
+          },
+          pilih_item_invoice(){
+            this.show_items_sc_detail = true;
+            this.$vuetify.goTo('#tambah_item_invoice');
+            console.log('item sc show')
+              if(this.items_sc.length >= 1){
+                this.items_sc[0].item.forEach((data, index) => {
+                  // data.checklist = true;
+                  //cek if already invoiced
+                  if(data.invoiced == false){
+                    this.items_sc_detail.push(data);
+                  }
+                })
+                this.selected_no_sc = this.items_sc[0].nomor_sc;
+              }
+            this.isAddingInvoice = false;
+            //  this.items_sc_detail 
+          },
           clear_form_memo(){
             this.mm_supplier = '';
             this.mm_alamat_supplier = '';
@@ -853,16 +940,16 @@ import { FileOpener } from '@capacitor-community/file-opener';
             this.sortBy = sortBy;
             console.log(sortBy);
             if (sortBy){
-              this.sort_invoice();
+              this.search_invoice_func();
             }else {
-              this.get_invoice();
+              this.search_invoice_func();
             }
           },
           handle_sortDesc(sortDesc){
             this.sortDesc = sortDesc;
             console.log(sortDesc);
             if (sortDesc){
-              this.sort_invoice()
+              this.search_invoice_func()
             } 
           },
           handlePagination(pagination) {
@@ -871,7 +958,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.pagination.page = pagination.page;             
               this.item_invoice = [];
               console.log(pagination)
-              this.$axios.get('/invoice?page='+pagination.page)
+              this.$axios.post('/invoice/search-invoice?page='+pagination.page, {search_invoice : this.search_invoice, date_sc : this.date_invoice_search, sortBy : this.sortBy, sortDesc : this.sortDesc})
               .then(response => {
                   // console.log(response);
                   response.data.data.data.forEach((x ,index) => {
@@ -936,6 +1023,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
           search_sales_contract() {       
             this.loading_sc = true;             
             this.items_sc = [];
+            this.pagination.page = 1;
 
             this.$axios.post('/sales_contract/search-sc', {search_sc : this.search_sc})
             .then(response => {
@@ -961,8 +1049,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
           search_invoice_func() {       
             this.loading_invoice = true;             
             this.item_invoice = [];
-
-            this.$axios.post('/invoice/search-invoice', {search_invoice : this.search_invoice, date_sc : this.date_invoice_search})
+            this.pagination.page = 1;   
+            this.$axios.post('/invoice/search-invoice', {search_invoice : this.search_invoice, date_sc : this.date_invoice_search, sortBy : this.sortBy, sortDesc : this.sortDesc})
             .then(response => {
               // console.log(response);
               response.data.data.data.forEach((x ,index) => {
@@ -974,6 +1062,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
                   this.item_invoice.push(x);                  
               })
               this.loading_invoice = false;
+              this.pagination.itemsLength = response.data.data.total
+              this.loading_invoice= false;
             })
             .catch(error => {
               console.log(error);              
@@ -981,6 +1071,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
           simpan_invoice() {
             this.loading_simpan = true;
+           
             this.$axios.post('/invoice', this.form_invoice)
             .then(response => {
               console.log(response.data);
@@ -990,6 +1081,9 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.item_invoice = [];
               this.get_invoice();
               this.isAddingInvoice = false;
+              this.checklist_sc = [];
+              this.items_sc_detail = [];
+              this.show_items_sc_detail = false;
             })
             .catch(error => {
               console.log(error.data)
@@ -998,11 +1092,13 @@ import { FileOpener } from '@capacitor-community/file-opener';
 
           },
           delete_invoice() {
+            this.loading_simpan = true;
             this.$axios.delete('/invoice/'+this.invoice_id_todelete)
             .then(response => {
               this.dialog_delete_invoice = false;  
               this.item_invoice = [];
               this.get_invoice();
+              this.loading_simpan = false;
               console.log('berhasil hapus')
             })
             .catch(error => {
@@ -1084,7 +1180,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
               if (value === null){
                 this.selected_sc = '';
               }
-            }
+            },
         },
         filters : {
           rupiah(value){
