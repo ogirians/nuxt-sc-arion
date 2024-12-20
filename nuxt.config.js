@@ -52,8 +52,8 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: 'http://172.9.1.157:8005/api',
-    // baseURL: 'https://arionpancasekawan.com/api',
+    // baseURL: 'http://172.9.1.157:8005/api',
+    baseURL: 'https://arionpancasekawan.com/api',
     withCredentials: true,
     init(axios) {
       axios.defaults.withCredentials = true,
@@ -62,7 +62,8 @@ export default {
   },
 
   env: {
-    baseURL: 'http://172.9.1.157:8005' // Add the base URL to environment variables
+    // baseURL: 'http://172.9.1.157:8005' // Add the base URL to environment variables
+    baseURL: 'https://arionpancasekawan.com',
   },
 
 

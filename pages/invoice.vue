@@ -593,6 +593,7 @@
               class="elevation-1"
               hide-default-footer
               :loading = "loading_simpan"
+              :items-per-page = "100"
             >
               <template v-slot:item.checklist="{ item }">
                 <!-- <v-simple-checkbox
@@ -603,7 +604,7 @@
             </v-data-table>
           </v-card>
           <div class="d-flex justify-end">
-            <v-btn @click="simpan_invoice()" :disabled="loading_simpan" class="mt-3" color="success">
+            <v-btn @click="simpan_invoice()" :disabled="loading_simpan || checklist_sc.length == 0" class="mt-3" color="success">
               simpan
             </v-btn>
           </div>
@@ -674,6 +675,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                     itemsLength:0, // Number of items per page
                   },
               headers_inv_item: [
+                        { text: 'no'              , value: 'no' },
                         { text: 'Jenis Barang'    , value: 'jenis_barang' },
                         { text: 'Code Coil'       , value: 'code_coil' },
                         { text: 'Qty'             , value: 'qty' },
@@ -791,7 +793,9 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 this.items_sc[0].item.forEach((data, index) => {
                   // data.checklist = true;
                   //cek if already invoiced
+
                   if(data.invoiced == false){
+                    data.no = index+1;
                     this.items_sc_detail.push(data);
                   }
                 })

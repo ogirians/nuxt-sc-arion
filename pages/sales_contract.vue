@@ -573,7 +573,7 @@
                           <input @change="HitungTotal(index)" style="width: 70px;" type="number" v-model="item.qty"/>   
                           <v-select
                             v-model="item.satuan_qty"
-                            :items="['Cm', 'Kg', 'M',]"
+                            :items="['Cm', 'Kg', 'M','Lbr','Pcs']"
                             label="satuan"
                             persistent-hint
                             return-object
@@ -606,7 +606,7 @@
                           <input style="width: 70px;" type="text" v-model="item.total_mtr"/>
                           <v-select
                             v-model="item.satuan_lenght"
-                            :items="['Cm', 'Kg', 'Mtr']"
+                            :items="['Cm','Mtr','Mm']"
                             label="satuan"
                             persistent-hint
                             return-object
