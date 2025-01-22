@@ -1371,6 +1371,7 @@
             this.loading_sc = false;
           } catch (error) {
             console.error('Error deleting the file:', error);
+            this.loading_sc = false;
           }
         },
 
@@ -1619,6 +1620,8 @@
               this.loading_sc = false;
             } catch (error) {
               console.error(error);
+              this.selected_sc = '';
+              this.loading_sc = false;
             }
           }
         },

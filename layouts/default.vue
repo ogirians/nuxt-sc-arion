@@ -48,7 +48,12 @@
         src="/arion.png"
       ></v-img>
     <v-spacer />
-    
+    <v-btn color="info" class="ronded-xl" style="position: absolute; right: 20px;" icon @click="logOut()">
+      <v-icon>
+        mdi-exit-to-app
+      </v-icon>
+     
+    </v-btn>
     </v-app-bar>
     <v-main class="mb-15" style="background-color: #f8fffd;">
 
@@ -110,6 +115,26 @@ export default {
     }
     return +to.query.page < +from.query.page ? 'slide-right' : 'slide-left'
   },
+  mounted(){
+    this.token = localStorage.getItem('arn_tkn');
+    if(this.token){
+      this.$axios.setToken(this.token, 'Bearer');
+
+      this.$axios.get('/user')
+      .then(response => {
+        console.log(response.data);
+        // this.$router.push({path : '/'});
+      })
+      .catch(error =>{
+        console.log('gagal auth');
+        this.$router.push({path : '/login_page'});
+      })
+    }else {
+      this.$router.push({path : '/login_page'});
+    }
+
+   
+  },
 
   name: 'DefaultLayout',
   data () {
@@ -118,6 +143,7 @@ export default {
       drawer: false,
       fixed: false,
       bottom : 0,
+      token: '',
       items: [
         {
           icon: 'mdi-apps',
@@ -162,6 +188,12 @@ export default {
           default: return 'white'
         }
       },
-    },
+  },
+  methods:{
+    logOut() {
+      localStorage.removeItem('arn_tkn');
+      this.$router.push({path : '/login_page'});
+    }
+  }
 }
 </script>

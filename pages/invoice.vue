@@ -184,6 +184,8 @@
                  sj
               </v-chip>
 
+              
+
               <!-- <v-chip 
                 class="mr-2"
                 x-small
@@ -210,6 +212,14 @@
                 mdi-pencil
               </v-icon> -->
               <v-icon
+                class="mr-2"
+                small
+                color="secondary"
+                @click="isAddingFile = true; selected_inv = item.id"
+              >
+                mdi-paperclip
+              </v-icon>
+              <v-icon
                 small
                 color="error"
                 @click="show_dialog_delete(item.id)"
@@ -230,6 +240,64 @@
             </template>
             <template v-slot:item.tanggal_invoice="{ item }">
               {{ item.tanggal_invoice | tanggal_id }}
+            </template>
+            <template v-slot:item.inv_document="{item}">
+               <!-- {{ item.sc_dokumen_id ? item.document.name : '-' }} -->
+              <div v-if="item.inv_dokumen_id ">
+                <a  @click="download_file(item.inv_document.file.id)">
+                    Unduh
+                    <v-icon
+                    class="mr-2"
+                    small
+                    color="secondary"
+                    >
+                    mdi-download
+                  </v-icon>
+                </a>
+                |
+                <a>
+                  <v-icon
+                    small
+                    color="error"
+                    @click="delete_file(item.id, 'invoice')"
+                  >
+                    mdi-delete
+                  </v-icon>
+                </a>
+              </div>              
+              
+              <div v-else>
+                -  
+              </div>
+            </template>
+            <template v-slot:item.fak_document="{item}">
+               <!-- {{ item.sc_dokumen_id ? item.document.name : '-' }} -->
+              <div v-if="item.fak_dokumen_id ">
+                <a  @click="download_file(item.fak_document.file.id)">
+                    Unduh
+                    <v-icon
+                    class="mr-2"
+                    small
+                    color="secondary"
+                    >
+                    mdi-download
+                  </v-icon>
+                </a>
+                |
+                <a>
+                  <v-icon
+                    small
+                    color="error"
+                    @click="delete_file(item.id, 'faktur')"
+                  >
+                    mdi-delete
+                  </v-icon>
+                </a>
+              </div>              
+              
+              <div v-else>
+                -  
+              </div>
             </template>
           
             </v-data-table>
@@ -562,6 +630,87 @@
               </v-card-actions>          
             </v-card>
           </v-overlay>
+          <v-overlay
+            :absolute="false"
+            :value="isAddingFile"
+          >
+          <v-card 
+            light
+            class="pa-2"
+          >
+            <v-card-title>upload dokumen: </v-card-title>
+            <v-divider></v-divider>
+              <v-sheet
+                class="mx-auto mt-5 mb-5"
+                max-width="700"
+              >
+                <v-slide-group
+                   v-model="selected_upload_doc"
+                   mandatory
+                >
+                  <v-slide-item
+                     v-slot="{ active, toggle }"
+                     value = "invoice"
+                  >
+                    <v-btn
+                      class="mr-2"
+                      :input-value="active"
+                      active-class="purple white--text"
+                      depressed
+                      rounded
+                      @click="toggle"
+                      x-small
+                    >
+                      Invoice
+                    </v-btn>
+                  </v-slide-item>
+                  <v-slide-item
+                     v-slot="{ active, toggle }"
+                     value = "faktur"
+                  >
+                    <v-btn
+                      class=""
+                      :input-value="active"
+                      active-class="purple white--text"
+                      depressed
+                      rounded
+                      @click="toggle"
+                      x-small
+                    >
+                      Faktur
+                    </v-btn>
+                  </v-slide-item>
+                </v-slide-group>
+              </v-sheet>     
+              <!-- <input type="file" @change="handleFileUpload($event)" /> -->
+              <v-file-input
+                type="file"
+                show-size
+                truncate-length="15"
+                @change="handleFileUpload"
+              ></v-file-input>
+            <v-divider></v-divider>
+            <v-card-actions class="d-flex justify-end">
+                    
+              <v-btn
+                small
+                class=""
+                color="success"
+                @click="isAddingFile = false; uploadFile();"
+              >
+                simpan
+              </v-btn>
+              <v-btn
+                small
+                class=""
+                color="error"
+                @click="isAddingFile = false;"
+              >
+                batal
+              </v-btn>
+            </v-card-actions>          
+          </v-card>
+        </v-overlay>  
         </v-container>    
       </v-card>
       <v-card class="logo" color="primary" elevation="5" v-if="show_items_sc_detail">
@@ -694,7 +843,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       value: 'no',
                   },
                   {
-                      text: 'No sales contract',
+                      text: 'No Invoice',
                       align: 'start',
                       sortable: false,
                       value: 'nomor_invoice',
@@ -718,6 +867,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       value: 'total_invoice',
                   },
                   { text: 'Actions', value: 'actions', sortable: false },
+                  { text: 'Dokumen invoice', value: 'inv_document', sortable: false },
+                  { text: 'Dokumen faktur', value: 'fak_document', sortable: false }
               ],
               search_sc : '',                     
               date_invoice : '',
@@ -731,7 +882,9 @@ import { FileOpener } from '@capacitor-community/file-opener';
               keterangan:'',
               sopir:'',
               nopol:'',
-              memoToDownload: ''
+              memoToDownload: '',
+              isAddingFile : false,
+              selected_upload_doc: 'invoice'
           }
         },
         computed : {
@@ -778,6 +931,69 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
         },  
         methods :  {
+          handleFileUpload(file) {
+            console.log(file)
+            this.file = file;
+          },
+          async uploadFile() {
+            if (!this.file) {
+              alert('Please select a file to upload.');
+              return;
+            } else {
+
+              const formData = new FormData();
+              formData.append('file', this.file);            
+              formData.append('inv_id', this.selected_inv);
+              formData.append('tipe', this.selected_upload_doc);
+
+              this.loading_invoice = true;
+              try {
+                const response = await this.$axios.post('/invoice/upload-doc', formData, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data',
+                  },
+                });
+                console.log(response.data);
+                this.file = null;
+                this.search_invoice_func();
+                this.selected_inv = '';
+                this.loading_invoice = false;
+              } catch (error) {
+                console.error(error);
+                this.selected_inv = '';
+                this.loading_invoice = false;
+              }
+            }
+          },
+          async delete_file(sc_id, tipe) {
+          try {
+            this.loading_invoice = true;
+            this.item_invoice = [];
+            const response = await this.$axios.get('/delete_file_doc/'+sc_id+'/'+tipe);
+            this.search_invoice_func();
+            console.log(response);
+            this.loading_invoice = false;
+          } catch (error) {
+            console.error('Error deleting the file:', error);
+            this.loading_invoice = false;
+          }
+        },
+        async download_file(file_id) {
+          try {
+            const response = await this.$axios.get('/download/'+file_id, {
+              responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'file.pdf'); // Change the file name and extension as needed
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+          } catch (error) {
+            console.error('Error downloading the file:', error);
+          }
+        },
           clear_item_form(){
               this.items_sc = [];
               this.isAddingInvoice = false;
