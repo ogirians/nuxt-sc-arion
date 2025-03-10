@@ -1136,7 +1136,9 @@
         grand_total_qty : 0,
         ongkir:0,
         sales_contract : '',
-        tipe_pembayaran : 'LOCO'
+        tipe_pembayaran : 'LOCO',
+        jurnal_token : process.env.JURNAL_TKN
+
       } 
     },
     computed: {

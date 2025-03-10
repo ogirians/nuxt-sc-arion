@@ -75,6 +75,18 @@
           </v-row>
         </v-container>
       </v-app-bar>
+      <v-alert
+        dismissible
+        type="success"
+        v-if = "pushed_to_jurnal == true"
+        v-model = "pushed_to_jurnal"
+      >berhasil push data {{ selected_no_inv }} ke jurnal </v-alert>
+      <v-alert
+        dismissible
+        type="error"
+        v-if = "is_fail_to_jurnal == true"
+        v-model ="is_fail_to_jurnal"
+      >gagal push data {{ selected_no_inv }} ke jurnal </v-alert>
       <v-card class="logo" color="primary" elevation="5">
           <v-img 
               src="/card_background.jpg" 
@@ -123,6 +135,17 @@
                     <v-spacer></v-spacer>
                     <v-btn color="blue darken-1" text @click="dialog_delete_invoice = false">Batal</v-btn>
                     <v-btn color="blue darken-1" text @click="delete_invoice()">OK</v-btn>
+                    <v-spacer></v-spacer>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+              <v-dialog v-model="dialog_push_ulang_invoice" max-width="500px">
+                <v-card>
+                  <v-card-title class="text-h6" style="word-break: normal; overflow-wrap: break-word; white-space: normal;">data sudah ada di jurnal, apakah ingin push ulang? <p style="color : red">(data yg sudah masuk di jurnal akan di reset)</p></v-card-title>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn small color="error"  @click="dialog_push_ulang_invoice = false">Batal</v-btn>
+                    <v-btn small color="success"  @click="patchJurnalInvoice()">Lanjut</v-btn>
                     <v-spacer></v-spacer>
                   </v-card-actions>
                 </v-card>
@@ -183,9 +206,22 @@
               </v-icon>
                  sj
               </v-chip>
-
-              
-
+              <v-chip
+                class="mr-2"
+                x-small
+                color="blue"
+                @click="pushJurnalInvoice(item.id)"
+                style="color: white;"
+              >
+                <v-icon
+                small
+                class="mr-2"
+                color="white"
+                >
+                  mdi mdi-file-arrow-left-right-outline
+                </v-icon>
+              Jurnal.id
+              </v-chip>
               <!-- <v-chip 
                 class="mr-2"
                 x-small
@@ -219,6 +255,7 @@
               >
                 mdi-paperclip
               </v-icon>
+
               <v-icon
                 small
                 color="error"
@@ -298,6 +335,47 @@
               <div v-else>
                 -  
               </div>
+            </template>
+            <template v-slot:item.status_jurnal="{item}">
+              <!-- {{ item.status_jurnal }} -->
+              <div v-if ="loading_status_invoice == false">
+                <v-chip
+                v-if="item.status_jurnal == 'overdue'"
+                class="ma-2"
+                
+                color="orange"
+                label
+                outlined
+                >
+                  overdue
+                </v-chip>
+                <v-chip
+                  v-if="item.status_jurnal == 'lunas'"
+                  class="ma-2"
+                  color="success"
+                  label
+                  outlined
+                >
+                  Paid
+                </v-chip>
+                <v-chip
+                  v-if="item.status_jurnal == 'belum push'"
+                  class="ma-2"
+                  color="error"
+                  label
+                  outlined
+                >
+                  x
+                </v-chip>
+              </div>
+             
+              <v-progress-circular
+                v-if = "loading_status_invoice == true"
+                indeterminate
+                color="blue"
+                :size="20"
+              ></v-progress-circular>
+               <!-- {{ item.status_jurnal }} -->
             </template>
           
             </v-data-table>
@@ -835,6 +913,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                   ],
               items_sc_detail :[],
               selected_no_sc : '',
+              selected_no_inv : '',
               headers_sc : [
                   {
                       text: 'No',
@@ -868,7 +947,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
                   },
                   { text: 'Actions', value: 'actions', sortable: false },
                   { text: 'Dokumen invoice', value: 'inv_document', sortable: false },
-                  { text: 'Dokumen faktur', value: 'fak_document', sortable: false }
+                  { text: 'Dokumen faktur', value: 'fak_document', sortable: false },
+                  { text: 'status Jurnal', value: 'status_jurnal', sortable: false },
               ],
               search_sc : '',                     
               date_invoice : '',
@@ -884,7 +964,13 @@ import { FileOpener } from '@capacitor-community/file-opener';
               nopol:'',
               memoToDownload: '',
               isAddingFile : false,
-              selected_upload_doc: 'invoice'
+              selected_upload_doc: 'invoice',
+              jurnal_token : process.env.JURNAL_TKN,
+              pushed_to_jurnal : false,
+              is_fail_to_jurnal : false,
+              dialog_push_ulang_invoice : false,
+              jurnal_invoice_form : '',
+              loading_status_invoice : false
           }
         },
         computed : {
@@ -931,6 +1017,137 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
         },  
         methods :  {
+          async pushJurnalInvoice(id){
+            let inv =  this.item_invoice.find(data => data.id == id); 
+            this.selected_no_inv = inv.nomor_invoice;
+            let encodedParam = encodeURIComponent(inv.nomor_invoice);
+    
+            //cek apakah sudah pernah push to jurnal
+            let cekJurnalinvoice = await this.getJurnalInvoice(encodedParam);
+            console.log(cekJurnalinvoice);
+
+            //form insert jurnal
+            let form = {
+              "sales_invoice": {
+                "transaction_date": inv.tanggal_invoice,
+                "transaction_lines_attributes": [
+                  {
+                    "quantity": 1,
+                    "rate": inv.total_invoice,
+                    "discount": 0,
+                    "product_name": "COIIL",
+                    "line_tax_name": "PPN"
+                  }
+                ],
+                "shipping_date": inv.tanggal_invoice,
+                "shipping_price": 0,
+                "shipping_address": "Test Street",
+                "is_shipped": false,
+                "ship_via": "-",
+                "reference_no": "-",
+                "tracking_no": "-",
+                "address": inv.sales_contract.customer.alamat,
+                "term_name": "Custom",
+                "due_date": inv.tanggal_invoice,
+                "deposit_to_name": "Piutang Usaha",
+                "deposit": 0,
+                "discount_unit": 0,
+                "witholding_account_name": "Piutang Usaha",
+                "witholding_value": 0,
+                "witholding_type": "percent",
+                "discount_type_name": "percent",
+                "person_name": inv.sales_contract.customer.name,
+                "transaction_no": inv.nomor_invoice,
+                "message": "-",
+                "memo": "-",
+                "custom_id": inv.id,
+                "source": "Arion Push",
+                "use_tax_inclusive": true,
+                "tax_after_discount": false,
+              }
+            }
+            this.jurnal_invoice_form = form;
+            
+            //do update or insert 
+            if (cekJurnalinvoice.status){
+              console.log('data ada, melakukan update')
+              this.dialog_push_ulang_invoice = true;
+              // this.patchJurnalInvoice(encodedParam,form)
+
+            } else {
+              console.log('data belum ada, melakukan insert')
+              this.postJurnalInvoice(form)
+         
+            }
+
+          },
+
+          patchJurnalInvoice(){
+            this.dialog_push_ulang_invoice = false;
+            this.loading_invoice = true;
+            let encodedParam = encodeURIComponent(this.selected_no_inv);
+            this.$axios.patch('https://api.jurnal.id/partner/core/api/v1/sales_invoices/'+encodedParam,this.jurnal_invoice_form, 
+                  {
+                    headers: {
+                      'Accept': 'application/json', 
+                      'Authorization': 'Bearer '+this.jurnal_token 
+                    }})
+              .then(response => {
+                console.log(response);
+                this.loading_invoice = false;
+                this.pushed_to_jurnal = true;
+                this.search_invoice_func()
+              })
+              .catch(error => {
+                console.log(error);
+                this.loading_invoice = false;
+                this.is_fail_to_jurnal = true;
+                this.search_invoice_func()
+              })
+          },
+
+
+          postJurnalInvoice(form){
+            this.loading_invoice = true;
+            this.$axios.post('https://api.jurnal.id/partner/core/api/v1/sales_invoices',form, 
+                  {
+                    headers: {
+                      'Accept': 'application/json', 
+                      'Authorization': 'Bearer '+this.jurnal_token 
+                    }})
+              .then(response => {
+                console.log(response);
+                this.loading_invoice = false;
+                this.pushed_to_jurnal = true;
+                this.search_invoice_func()
+              })
+              .catch(error => {
+                console.log(error);
+                this.loading_invoice = false;
+                this.is_fail_to_jurnal = true;
+                this.search_invoice_func()
+              })
+          },
+
+          getJurnalInvoice(no_invoice) {
+            return new Promise( resolve => {
+               // Encodes to "INV%2FAPS%2F001%2F03%2F2024"
+              this.$axios.get('https://api.jurnal.id/partner/core/api/v1/sales_invoices/'+no_invoice, 
+                  {
+                    headers: {
+                      'Accept': 'application/json', 
+                      'Authorization': 'Bearer '+this.jurnal_token 
+                    }})
+              .then(response => {
+                // console.log(response);
+                resolve({status : true, data_jurnal : response.data});
+              })
+              .catch(error => {
+                // console.log(error);
+                resolve({status : false, error : error});
+              })
+            })
+          },
           handleFileUpload(file) {
             console.log(file)
             this.file = file;
@@ -1191,6 +1408,23 @@ import { FileOpener } from '@capacitor-community/file-opener';
                   })
                   this.pagination.itemsLength = response.data.data.total
                   this.loading_invoice = false;
+                }).
+                then( () => {
+                this.loading_status_invoice = true;
+                this.item_invoice.forEach( async (x) => {
+                    let data = '';
+                    let encodedParam = encodeURIComponent(x.nomor_invoice);
+                    data =  await this.getJurnalInvoice(encodedParam);      
+                    // console.log(data.data_jurnal.sales_invoice);
+                    if (data.status == true){
+                      x.status_jurnal = data.data_jurnal.sales_invoice.has_payments == true ? 'lunas' : 'overdue';
+                    }else{
+                      x.status_jurnal = 'belum push';
+                    }
+                  })
+                }).then( async ()=> {
+                  await this.wait(1000);
+                  this.loading_status_invoice = false;
                 })
                 .catch(error => {
                   console.log(error);
@@ -1272,6 +1506,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
             this.pagination.page = 1;   
             this.$axios.post('/invoice/search-invoice', {search_invoice : this.search_invoice, date_sc : this.date_invoice_search, sortBy : this.sortBy, sortDesc : this.sortDesc})
             .then(response => {
+              
               // console.log(response);
               response.data.data.data.forEach((x ,index) => {
                   if(index == 0){
@@ -1284,6 +1519,23 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.loading_invoice = false;
               this.pagination.itemsLength = response.data.data.total
               this.loading_invoice= false;
+            }).then( () => {
+                this.loading_status_invoice = true;
+                this.item_invoice.forEach( async (x) => {
+                  let data = '';
+                  let encodedParam = encodeURIComponent(x.nomor_invoice);
+                  data =  await this.getJurnalInvoice(encodedParam);      
+                  // console.log(data.data_jurnal.sales_invoice);
+                  if (data.status == true){
+                    x.status_jurnal = data.data_jurnal.sales_invoice.has_payments == true ? 'lunas' : 'overdue';
+                  }else{
+                    x.status_jurnal = 'belum push';
+                  }
+                })
+                              
+            }).then( async ()=> {
+               await this.wait(1000);
+               this.loading_status_invoice = false;
             })
             .catch(error => {
               console.log(error);              
