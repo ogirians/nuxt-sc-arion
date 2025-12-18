@@ -1305,6 +1305,27 @@ import { FileOpener } from '@capacitor-community/file-opener';
             if (doc == 'memo'){
               tipe = 'mm';
             } 
+
+            const inv = this.item_invoice.find(x => x.id === id);
+            let kodeInvoice = inv && inv.nomor_invoice ? inv.nomor_invoice.replace(/[\\/:*?"<>|]/g, '') : 'kode';
+            let customerName = inv && inv.sales_contract && inv.sales_contract.customer && inv.sales_contract.customer.name
+              ? inv.sales_contract.customer.name.replace(/[\\/:*?"<>|]/g, '')
+              : 'customer';
+            let tanggalInvoice = inv && inv.tanggal_invoice
+              ? this.$moment(inv.tanggal_invoice).format('DD-MM-YYYY')
+              : this.$moment().format('DD-MM-YYYY');
+
+            if (doc === 'invoice' || doc === 'invoice-x') {
+              kodeInvoice = kodeInvoice.replace(/^INV/i, 'INV');
+            }
+            if (doc === 'sj') {
+              kodeInvoice = kodeInvoice.replace(/^INV/i, 'SJ');
+            }
+
+            const filename = `${customerName}_${kodeInvoice}_${tanggalInvoice}.pdf`;
+            const androidFilename = filename.replace(/\//g, '_');
+
+
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
               this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
@@ -1323,7 +1344,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                         try {
                           // Write the file
                           const pdfFile = await Filesystem.writeFile({
-                            path: 'secrets/'+tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
+                            path: 'secrets/' + androidFilename,
                             data: base64Data,
                             directory: Directory.External,
                             recursive: true,
@@ -1352,7 +1373,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       // Create a link element and simulate a click to trigger the download
                       const link = document.createElement('a');
                       link.href = url;
-                      link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf'); // Set the filename
+                      link.setAttribute('download', filename);
                       document.body.appendChild(link);
                       link.click();
                       // Cleanup

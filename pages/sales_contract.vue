@@ -1672,6 +1672,30 @@
             tipe = 'sc';
           } 
           if(fetch_sc){
+            // Cari data sales contract dari items_sc
+              const scData = this.items_sc.find(item => item.id === id);
+              // Default filename jika data tidak ditemukan
+              let filename = tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf';
+              if (scData) {
+                // Format: NAMA CUSTOMER_KODE SALES CONTRACT_TANGGAL SALES CONTRACT.pdf
+                const customerName = scData.customer?.name ? scData.customer.name.replace(/[\\/:*?"<>|]/g, '') : 'customer';
+                let kodeSC = scData.nomor_sc ? scData.nomor_sc.replace(/[\\/:*?"<>|]/g, '') : 'kode'; // pakai let, bukan const
+                if (tipe === 'mm') {
+                  console.log('Modifying kodeSC for memo');
+                  // Contoh: ganti awalan SC/APS menjadi MEMOAPS, atau sesuaikan sesuai pola yang diinginkan
+                  kodeSC = kodeSC.replace(/^SC/i, 'MEMO');
+                  // Jika ingin benar-benar custom, bisa juga:
+                  // kodeSC = 'MEMOAPS/' + kodeSC.substr(kodeSC.indexOf('/') + 1);
+                }
+                
+                // Tanggal format DD-MM-YYYY
+                const tanggalSC = scData.tanggal_sc ? this.$moment(scData.tanggal_sc).format('DD-MM-YYYY') : this.$moment().format('DD-MM-YYYY');
+                filename = `${customerName}_${kodeSC}_${tanggalSC}.pdf`;
+              }
+              // Untuk Android, pastikan '/' di kodeSC diganti '_'
+              const androidFilename = filename.replace(/\//g, '_');
+
+            
             this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
               .then(response => {   
                 
@@ -1687,8 +1711,8 @@
 
                     try {
                       // Write the file
-                      const pdfFile = await Filesystem.writeFile({
-                        path: 'secrets/'+tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf',
+                     const pdfFile = await Filesystem.writeFile({
+                        path: 'secrets/' + androidFilename,
                         data: base64Data,
                         directory: Directory.External,
                         recursive: true,
@@ -1706,28 +1730,19 @@
                   };
                   this.clear_form_memo()
 
-                } else if (Capacitor.getPlatform() === 'web') {
-                  // Web-specific handling
-                  console.log('Running on a web');
-                  
-                  // Create a Blob object from the response data
-                  const blob = new Blob([response.data], { type: 'application/pdf' });
-                  // Create a temporary URL for the Blob
-                  const url = window.URL.createObjectURL(blob);
-                  // Create a link element and simulate a click to trigger the download
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.setAttribute('download', tipe+'_'+this.$moment().format('YYYY-MM-DD')+'.pdf'); // Set the filename
-                  document.body.appendChild(link);
-                  link.click();
-                  // Cleanup
-                  window.URL.revokeObjectURL(url);
-
-                  this.clear_form_memo()
-
-                }
-                  
-              })
+                 } else if (Capacitor.getPlatform() === 'web') {
+                    // Web-specific handling
+                    const blob = new Blob([response.data], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', filename); // <-- pakai filename baru
+                    document.body.appendChild(link);
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                    this.clear_form_memo()
+                  }
+                })
               .catch(error => {
                   console.log(error);
                   this.loading_rekap = false;
