@@ -103,6 +103,10 @@
               <v-icon small>mdi-plus</v-icon>
               <span v-if="$vuetify.breakpoint.name == 'md'">sales contract</span>
               </v-btn>
+              <v-btn @click="search_invoice_func(pagination.page)" small rounded color="primary" class="mr-3">
+                <v-icon small>mdi-refresh</v-icon>
+                Refresh
+              </v-btn>
           </v-card-title>
       </v-card>
       <v-card class="logo mb-8" elevation="5">   
@@ -194,7 +198,7 @@
                 class="mr-2"
                 x-small
                 color="info"
-                @click="exportToPDF_api(item.id, 'sj')"
+                @click="openDialogExportDate(item.id)"
               >
                 <v-icon
                 small
@@ -260,6 +264,7 @@
                 small
                 color="error"
                 @click="show_dialog_delete(item.id)"
+
               >
                 mdi-delete
               </v-icon>
@@ -838,6 +843,68 @@
         </v-container>
       </v-card>
       <!-- <div v-for="item in selected_sc_item">{{ item.id }}</div> -->
+       <v-dialog
+          v-model="dialogExportDate"
+          persistent
+          max-width="400px"
+        >
+          <v-card>
+            <v-card-title class="text-h5">Pilih Tanggal</v-card-title>
+            <v-card-text>
+              <v-dialog
+                ref="dialog2"
+                v-model="modal2"
+                :return-value.sync="exportDate"
+                persistent
+                width="290px"
+              >
+                <template v-slot:activator="{ on, attrs2 }">
+                  <v-text-field            
+                    v-model="exportDate"
+                    label="tanggal sj"
+                    prepend-inner-icon="mdi-calendar"
+                    readonly
+                    v-bind="attrs2"
+                    v-on="on"
+                    dense
+                    outlined
+                    class="mx-4 py-0"
+                    clearable
+                  ></v-text-field>
+                </template>
+                <v-date-picker
+                  v-model="exportDate"
+                  scrollable          
+                >
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="modal2 = false"
+                  >
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="$refs.dialog2.save(exportDate)"
+                  >
+                    OK
+                  </v-btn>
+                </v-date-picker>
+              </v-dialog>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="dialogExportDate = false">
+                Batal
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="exportToPDF_api(selected_inv, 'sj')">
+                OK
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
@@ -856,6 +923,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
         created(){
           this.date_invoice = this.$moment().format('YYYY-MM-DD');
           this.date_mm = this.$moment().format('YYYY-MM-DD');
+          this.exportDate = this.$moment().format('YYYY-MM-DD');
         },
         data(){
           return {
@@ -970,7 +1038,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
               is_fail_to_jurnal : false,
               dialog_push_ulang_invoice : false,
               jurnal_invoice_form : '',
-              loading_status_invoice : false
+              loading_status_invoice : false,
+              dialogExportDate: false,
+              exportDate: null,
+              openDatePicker: false,
           }
         },
         computed : {
@@ -1049,14 +1120,14 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 "address": inv.sales_contract.customer.alamat,
                 "term_name": "Custom",
                 "due_date": inv.tanggal_invoice,
-                "deposit_to_name": "Piutang Usaha",
+                "deposit_to_id": 90543234,
                 "deposit": 0,
                 "discount_unit": 0,
                 "witholding_account_name": "Piutang Usaha",
                 "witholding_value": 0,
                 "witholding_type": "percent",
                 "discount_type_name": "percent",
-                "person_name": inv.sales_contract.customer.name,
+                "person_name": inv.sales_contract.customer.name.trim(),
                 "transaction_no": inv.nomor_invoice,
                 "message": "-",
                 "memo": "-",
@@ -1064,6 +1135,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 "source": "Arion Push",
                 "use_tax_inclusive": true,
                 "tax_after_discount": false,
+                "tax_no" : inv.sales_contract.customer.npwp
               }
             }
             this.jurnal_invoice_form = form;
@@ -1096,37 +1168,112 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 console.log(response);
                 this.loading_invoice = false;
                 this.pushed_to_jurnal = true;
-                this.search_invoice_func()
+                this.search_invoice_func(this.pagination.page);
               })
               .catch(error => {
                 console.log(error);
                 this.loading_invoice = false;
                 this.is_fail_to_jurnal = true;
-                this.search_invoice_func()
+                this.search_invoice_func(this.pagination.page);
               })
           },
-
-
-          postJurnalInvoice(form){
-            this.loading_invoice = true;
-            this.$axios.post('https://api.jurnal.id/partner/core/api/v1/sales_invoices',form, 
-                  {
-                    headers: {
-                      'Accept': 'application/json', 
-                      'Authorization': 'Bearer '+this.jurnal_token 
-                    }})
+          createCustomerPromise(customerDetails) {
+            return new Promise((resolve, reject) => {
+              this.$axios.post(
+                'https://api.jurnal.id/partner/core/api/v1/customers',
+                customerDetails,
+                {
+                  headers: {
+                    Accept: 'application/json',
+                    Authorization: 'Bearer ' + this.jurnal_token,
+                  },
+                }
+              )
               .then(response => {
+                console.log('Customer created successfully');
+                resolve(response);
+              })
+              .catch(error => {
+                reject(error);
+              });
+            });
+          },
+          postJurnalInvoice(form) {
+            this.loading_invoice = true;
+            this.$axios
+              .post('https://api.jurnal.id/partner/core/api/v1/sales_invoices', form, {
+                headers: {
+                  Accept: 'application/json',
+                  Authorization: 'Bearer ' + this.jurnal_token,
+                },
+              })
+              .then((response) => {
                 console.log(response);
                 this.loading_invoice = false;
                 this.pushed_to_jurnal = true;
-                this.search_invoice_func()
+                this.search_invoice_func(this.pagination.page);
               })
-              .catch(error => {
+              .catch(async (error) => {
                 console.log(error);
-                this.loading_invoice = false;
-                this.is_fail_to_jurnal = true;
-                this.search_invoice_func()
-              })
+
+                // Check if the error is related to a missing person_name
+                if (
+                  error.response &&
+                  error.response.data &&
+                  error.response.data.person_name === 'person not exist'
+                ) {
+                  console.log('Customer does not exist. Creating customer...');
+
+                  // Extract customer details from the invoice
+                  const inv = form.sales_invoice;
+                  const customerDetails = {
+                    customer: {
+                      title: '',
+                      first_name: '',
+                      middle_name: '',
+                      last_name: '',
+                      display_name: inv.person_name,
+                      associate_company: inv.person_name,
+                      billing_address: '',
+                      address: inv.address,
+                      phone: '',
+                      fax: '',
+                      mobile: '',
+                      email: '',
+                      disable_max_credit_limit: '',
+                      max_credit_limit: '',
+                      start_balance: '',
+                      opening_balance: 0,
+                      default_ar_account_name: 'Piutang Usaha',
+                      default_ap_account_name: 'Hutang Usaha',
+                      source: 'api',
+                      tax_no: inv.tax_no,
+                      other_detail: '',
+                      custom_id: '',
+                    },
+                  };
+
+                 
+                  // Panggil createCustomerPromise, lalu post invoice setelah selesai
+                  this.createCustomerPromise(customerDetails)
+                    .then(() => {
+                      return this.postJurnalInvoice(form);
+                    })
+                    .catch(customerError => {
+                      console.error('Failed to create customer:', customerError);
+                      this.loading_invoice = false;
+                      this.is_fail_to_jurnal = true;
+                      this.search_invoice_func(this.pagination.page);
+                    });
+
+                    return;
+                } else {
+                  // Other errors
+                  this.loading_invoice = false;
+                  this.is_fail_to_jurnal = true;
+                  this.search_invoice_func(this.pagination.page);
+                }
+              });
           },
 
           getJurnalInvoice(no_invoice) {
@@ -1172,7 +1319,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 });
                 console.log(response.data);
                 this.file = null;
-                this.search_invoice_func();
+                this.search_invoice_func(this.pagination.page);
                 this.selected_inv = '';
                 this.loading_invoice = false;
               } catch (error) {
@@ -1289,6 +1436,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 // do something for any other platform
             }
           },
+          openDialogExportDate(id){
+            this.dialogExportDate = true;
+            this.selected_inv = id;
+          },
           async exportToPDF_api(id,doc) {
             let tipe = '';
             let stamp = true;
@@ -1328,7 +1479,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
 
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
-              this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
+              this.$axios.post('/download-pdf',{id : id, tipe : tipe, tanggal_sj : this.exportDate, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
                   .then(response => {   
                     
                     if (Capacitor.getPlatform() === 'android') {
@@ -1410,6 +1561,27 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.search_invoice_func()
             } 
           },
+         async processJurnalInvoices() {
+            this.loading_status_invoice = true;
+
+            // Create an array of promises for all invoices
+            const fetchPromises = this.item_invoice.map(async (x) => {
+              let data = '';
+              let encodedParam = encodeURIComponent(x.nomor_invoice);
+              data = await this.getJurnalInvoice(encodedParam); // Fetch data for each invoice
+              if (data.status === true) {
+                x.status_jurnal = data.data_jurnal.sales_invoice.has_payments === true ? 'lunas' : 'overdue';
+              } else {
+                x.status_jurnal = 'belum push';
+              }
+              await this.wait(500); // Add a delay between each request
+            });
+
+            // Wait for all fetches to complete
+            await Promise.all(fetchPromises);
+
+            this.loading_status_invoice = false;
+          },
           handlePagination(pagination) {
             if(this.pagination.page != pagination.page){
               this.loading_invoice = true;
@@ -1431,21 +1603,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
                   this.loading_invoice = false;
                 }).
                 then( () => {
-                this.loading_status_invoice = true;
-                this.item_invoice.forEach( async (x) => {
-                    let data = '';
-                    let encodedParam = encodeURIComponent(x.nomor_invoice);
-                    data =  await this.getJurnalInvoice(encodedParam);      
-                    // console.log(data.data_jurnal.sales_invoice);
-                    if (data.status == true){
-                      x.status_jurnal = data.data_jurnal.sales_invoice.has_payments == true ? 'lunas' : 'overdue';
-                    }else{
-                      x.status_jurnal = 'belum push';
-                    }
-                  })
+                  this.processJurnalInvoices();
                 }).then( async ()=> {
-                  await this.wait(1000);
-                  this.loading_status_invoice = false;
+                  // await this.wait(1000);
+                  // this.loading_status_invoice = false;
                 })
                 .catch(error => {
                   console.log(error);
@@ -1521,46 +1682,39 @@ import { FileOpener } from '@capacitor-community/file-opener';
               console.log(error);              
             })
           },
-          search_invoice_func() {       
+          search_invoice_func(page = 1) {       
             this.loading_invoice = true;             
             this.item_invoice = [];
-            this.pagination.page = 1;   
-            this.$axios.post('/invoice/search-invoice', {search_invoice : this.search_invoice, date_sc : this.date_invoice_search, sortBy : this.sortBy, sortDesc : this.sortDesc})
+            this.pagination.page = page; // Set the current page
+            this.$axios.post(`/invoice/search-invoice?page=${this.pagination.page}`, {
+              search_invoice: this.search_invoice,
+              date_sc: this.date_invoice_search,
+              sortBy: this.sortBy,
+              sortDesc: this.sortDesc,
+            })
             .then(response => {
-              
-              // console.log(response);
-              response.data.data.data.forEach((x ,index) => {
-                  if(index == 0){
-                    x.no = response.data.data.from ;
-                  }else{
-                    x.no = response.data.data.from + index ;
-                  }                  
-                  this.item_invoice.push(x);                  
-              })
+              response.data.data.data.forEach((x, index) => {
+                if (index == 0) {
+                  x.no = response.data.data.from;
+                } else {
+                  x.no = response.data.data.from + index;
+                }
+                this.item_invoice.push(x);
+              });
+              this.pagination.itemsLength = response.data.data.total; // Update total items
               this.loading_invoice = false;
-              this.pagination.itemsLength = response.data.data.total
-              this.loading_invoice= false;
-            }).then( () => {
-                this.loading_status_invoice = true;
-                this.item_invoice.forEach( async (x) => {
-                  let data = '';
-                  let encodedParam = encodeURIComponent(x.nomor_invoice);
-                  data =  await this.getJurnalInvoice(encodedParam);      
-                  // console.log(data.data_jurnal.sales_invoice);
-                  if (data.status == true){
-                    x.status_jurnal = data.data_jurnal.sales_invoice.has_payments == true ? 'lunas' : 'overdue';
-                  }else{
-                    x.status_jurnal = 'belum push';
-                  }
-                })
-                              
-            }).then( async ()=> {
-               await this.wait(1000);
-               this.loading_status_invoice = false;
+            })
+            .then(() => {
+              this.processJurnalInvoices();
+            })
+            .then(async () => {
+              // await this.wait(1000);
+              // this.loading_status_invoice = false;
             })
             .catch(error => {
-              console.log(error);              
-            })
+              console.log(error);
+              this.loading_invoice = false;
+            });
           },
           simpan_invoice() {
             this.loading_simpan = true;
