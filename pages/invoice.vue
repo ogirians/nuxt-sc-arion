@@ -100,12 +100,12 @@
               </span>
               <v-spacer></v-spacer>
               <v-btn @click="isAddingInvoice = true" small rounded color="success" class="mr-3">
-              <v-icon small>mdi-plus</v-icon>
-              <span v-if="$vuetify.breakpoint.name == 'md'">sales contract</span>
+                <v-icon small>mdi-plus</v-icon>
+                <span v-if="$vuetify.breakpoint.name === 'md' || $vuetify.breakpoint.name === 'lg' || $vuetify.breakpoint.name === 'xl'">invoice</span>
               </v-btn>
               <v-btn @click="search_invoice_func(pagination.page)" small rounded color="primary" class="mr-3">
                 <v-icon small>mdi-refresh</v-icon>
-                Refresh
+                <span v-if="$vuetify.breakpoint.name === 'md' || $vuetify.breakpoint.name === 'lg' || $vuetify.breakpoint.name === 'xl'"> Refresh</span>
               </v-btn>
           </v-card-title>
       </v-card>
