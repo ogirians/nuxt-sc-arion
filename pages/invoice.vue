@@ -818,6 +818,99 @@
       <div id="tambah_item_invoice"></div>
       <v-card class="logo py-4 mb-10" elevation="5" v-if="show_items_sc_detail">      
         <v-container>
+          <v-row>
+            <!-- Column 1: Supplier -->
+            <v-col cols="12" md="6" class="mt-1 py-0 pr-2">
+              <v-autocomplete
+              :items = "items_sc"
+              :search-input.sync="search_sc"
+              :loading = "loading_sc"                
+              v-model = "selected_sc"
+              placeholder="supplier"
+              outlined
+              dense
+              clearable        
+              item-text="nomor_sc"
+              item-value="id"
+              ></v-autocomplete>
+              <v-text-field          
+                v-model="nomor_po"
+                placeholder="Nomor PO"
+                dense
+                outlined
+                class="py-0 mb-3"
+                clearable
+              ></v-text-field>
+
+              <v-checkbox
+                v-model="show_dp_field"
+                label="Tambah DP"
+                dense
+                class="py-0 "
+              ></v-checkbox>
+              <v-text-field          
+                v-if="show_dp_field"
+                v-model="dp_value"
+                placeholder="DP %"
+                type="number"
+                dense
+                outlined
+                class="py-0 mb-3"
+                clearable
+              ></v-text-field>
+
+            </v-col>
+
+            <!-- Column 2: DP and Fee -->
+            <v-col cols="12" md="6" class="py-0 mt-1" >
+              <div class="mt-2 mb-3">
+                <v-row v-for="(fee, index) in fees" :key="index" class="align-center">
+                  <v-col cols="5" class="py-0 pr-2">
+                    <v-text-field          
+                      v-model="fees[index].name"
+                      placeholder="Nama fee"
+                      dense
+                      outlined
+                      class="py-0"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="6" class="py-0">
+                    <v-text-field          
+                      v-model="fees[index].value"
+                      placeholder="Besaran fee"
+                      type="number"
+                      dense
+                      outlined
+                      class="py-0"
+                      clearable
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="1" class="pb-5 mb-3 pl-0 text-center">
+                    <v-btn
+                      v-if="index === fees.length - 1"
+                      icon
+                      small
+                      color="success"
+                      @click="addFeeField()"
+                    >
+                      <v-icon small>mdi-plus</v-icon>
+                    </v-btn>
+                    <v-btn
+                      v-else
+                      icon
+                      small
+                      color="error"
+                      @click="removeFeeField(index)"
+                    >
+                      <v-icon small>mdi-delete</v-icon>
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </div>
+            </v-col>
+          </v-row>
+
           <v-card outlined>
             <v-data-table
               :headers="headers_inv_item"
@@ -827,6 +920,14 @@
               :loading = "loading_simpan"
               :items-per-page = "100"
             >
+              <template v-slot:header.harga_beli="{ header }">
+                {{ header.text }}<br>
+                <v-icon @click="CopyValue('harga_beli')" small>mdi-list-box-outline</v-icon>
+                persis
+              </template>
+              <template v-slot:item.harga_beli="{ item, index }">
+                <input @focus="ClearValue('harga_beli', index)" @change="ConvertRpBeli(index)" style="width: 100px;" type="text" v-model="item.harga_beli_rp"/>
+              </template>
               <template v-slot:item.checklist="{ item }">
                 <!-- <v-simple-checkbox
                    v-model="item.checklist"
@@ -976,6 +1077,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
                         { text: 'Qty'             , value: 'qty' },
                         { text: 'Length'          , value: 'total_mtr' },
                         { text: 'Harga'           , value: 'harga' },
+                        { text: 'Harga Beli'      , value: 'harga_beli' },
                         { text: 'Keterangan'      , value: 'keterangan' },
                         { text: 'checklist'       , value: 'checklist' },
                   ],
@@ -1042,6 +1144,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
               dialogExportDate: false,
               exportDate: null,
               openDatePicker: false,
+              show_dp_field: false,
+              dp_value: '',
+              nomor_po: '',
+              fees: [{ name: '', value: '' }],
           }
         },
         computed : {
@@ -1065,10 +1171,21 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
          
           form_invoice() {
+            const selectedSc = this.items_sc.find(x => x.id === this.selected_sc) || {};
+            // const supplierName = selectedSc.sales_contract?.customer?.name || selectedSc.customer?.name || selectedSc.nama_supplier || '';
+
             const form = {
               sales_contract_id  : this.selected_sc,
-              tanggal_invoice : this.date_invoice,
-              items : this.checklist_sc
+              tanggal_invoice    : this.date_invoice,
+              nomor_po           : this.nomor_po,
+              // supplier           : supplierName,
+              dp                 : this.dp_value,
+              fees               : this.fees.filter(fee => fee.name || fee.value),
+              harga_beli         : this.items_sc_detail.map(item => ({
+                item_id    : item.id,
+                harga_beli : item.harga_beli || item.harga_beli_rp || ''
+              })),
+              items              : this.checklist_sc
               // items : 
             }
 
@@ -1088,6 +1205,12 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
         },  
         methods :  {
+          addFeeField() {
+            this.fees.push({ value: '' });
+          },
+          removeFeeField(index) {
+            this.fees.splice(index, 1);
+          },
           async pushJurnalInvoice(id){
             let inv =  this.item_invoice.find(data => data.id == id); 
             this.selected_no_inv = inv.nomor_invoice;
@@ -1364,6 +1487,10 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.checklist_sc = [];
               this.items_sc_detail = [];
               this.show_items_sc_detail = false;
+              this.nomor_po = '';
+              this.show_dp_field = false;
+              this.dp_value = '';
+              this.fees = [{ name: '', value: '' }];
           },
           pilih_item_invoice(){
             this.show_items_sc_detail = true;
@@ -1376,6 +1503,13 @@ import { FileOpener } from '@capacitor-community/file-opener';
 
                   if(data.invoiced == false){
                     data.no = index+1;
+                    // Pastikan properti harga_beli ada
+                    if (!data.harga_beli) {
+                      data.harga_beli = '';
+                      data.harga_beli_rp = '';
+                    } else {
+                      data.harga_beli_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(data.harga_beli);
+                    }
                     this.items_sc_detail.push(data);
                   }
                 })
@@ -1731,6 +1865,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
               this.checklist_sc = [];
               this.items_sc_detail = [];
               this.show_items_sc_detail = false;
+              this.clear_item_form();
             })
             .catch(error => {
               console.log(error.data)
@@ -1802,6 +1937,23 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
           convert_rupiah(value){
             return Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(value)
+          },
+          CopyValue(column){
+            if (column == 'harga_beli'){
+              this.items_sc_detail.forEach((item, index) => {
+                item.harga_beli = this.items_sc_detail[0].harga_beli;
+                item.harga_beli_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.items_sc_detail[0].harga_beli);
+              })
+            }
+          },
+          ConvertRpBeli(index){
+            this.items_sc_detail[index].harga_beli = this.items_sc_detail[index].harga_beli_rp;
+            this.items_sc_detail[index].harga_beli_rp = Intl.NumberFormat('id', { style: 'currency', currency: 'IDR' }).format(this.items_sc_detail[index].harga_beli_rp);
+          },
+          ClearValue(column, index){
+            if(column == 'harga_beli'){
+              this.items_sc_detail[index].harga_beli_rp = '';
+            }
           },
           update_invoice(){
             this.loading_simpan = true;

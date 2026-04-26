@@ -55,7 +55,9 @@ export default {
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     // baseURL: 'http://172.9.1.157:8005/api',
-    baseURL: 'https://arionpancasekawan.com/api',
+    // baseURL: 'https://arionpancasekawan.com/api',
+    baseURL: 'http://localhost:8000/api',
+
     withCredentials: true,
     init(axios) {
       axios.defaults.withCredentials = true,
@@ -92,6 +94,7 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+  transpile: ['fast-png', 'iobuffer']
   },
 
   moment: {

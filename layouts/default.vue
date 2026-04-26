@@ -95,7 +95,7 @@
       <v-btn :to="items[4].to" grow style="height: 100%;">
         <span>Coming</span>
 
-        <v-icon>mdi-image</v-icon>
+        <v-icon>mdi-cog</v-icon>
       </v-btn>
     </v-bottom-navigation>
     <!-- <v-footer
@@ -164,12 +164,12 @@ export default {
         {
           icon: 'mdi-apps',
           title: 'Rekap penjualan',
-          to: '/rekap_penjualan'
+          to: '/rekap_penjualan' 
         },
         {
           icon: 'mdi-chart-bubble',
           title: 'generate lain-lain',
-          to: '/inspire'
+          to: '/setting'
         }
       ],
       miniVariant: false,
