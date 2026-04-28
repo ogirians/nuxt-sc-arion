@@ -1696,7 +1696,7 @@
               const androidFilename = filename.replace(/\//g, '_');
 
             
-            this.$axios.post('/download-pdf',{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
+            this.$axios.post('/download-pdf/'+id,{id : id, tipe : tipe, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
               .then(response => {   
                 
                 if (Capacitor.getPlatform() === 'android') {
