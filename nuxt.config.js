@@ -7,7 +7,7 @@ export default {
   // target: 'static',
 
   // Global page headers: https://go.nuxtjs.dev/config-head
-  
+
   head: {
     titleTemplate: '%s - sc-arion',
     title: 'sc-arion',
@@ -56,19 +56,19 @@ export default {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
     // baseURL: 'http://172.9.1.157:8005/api',
     // baseURL: 'https://arionpancasekawan.com/api',
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'http://localhost:9000/api',
 
     withCredentials: true,
     init(axios) {
       axios.defaults.withCredentials = true,
-      axios.defaults.withXSRFToken = true
+        axios.defaults.withXSRFToken = true
     }
   },
 
   env: {
     // baseURL: 'http://172.9.1.157:8005' // Add the base URL to environment variables
     // baseURL: 'https://arionpancasekawan.com',
-    JURNAL_TKN : process.env.JURNAL_TKN
+    JURNAL_TKN: process.env.JURNAL_TKN
 
   },
 
@@ -94,7 +94,7 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
-  transpile: ['fast-png', 'iobuffer']
+    transpile: ['fast-png', 'iobuffer']
   },
 
   moment: {

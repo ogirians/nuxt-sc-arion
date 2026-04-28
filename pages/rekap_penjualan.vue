@@ -78,8 +78,26 @@
                 :search="search"
                 :loading="loading_rekap"
                 >
-                <template v-slot:item.total = "{ item }">
-                {{ item.total | rupiah }}
+                <template v-slot:item.total_penjualan = "{ item }">
+                {{ item.total_penjualan | rupiah }}
+                </template>
+                <template v-slot:item.dp_nominal = "{ item }">
+                {{ item.dp_nominal | rupiah }}
+                </template>
+                <template v-slot:item.total_pembelian = "{ item }">
+                {{ item.total_pembelian | rupiah }}
+                </template>
+                <template v-slot:item.dp_percent = "{ item }">
+                {{ item.dp_percent || 0 }} %
+                </template>
+                <template v-slot:item.fees="{ item }">
+                    <div v-if="item.fees">
+                        <ul class="pl-0" style="list-style: none;">
+                            <li v-for="(f, i) in (typeof item.fees === 'string' ? JSON.parse(item.fees) : item.fees)" :key="i">
+                                <small><b>{{ f.name }}:</b> {{ f.value | rupiah }}</small>
+                            </li>
+                        </ul>
+                    </div>
                 </template>
                 <template v-slot:item.dpp = "{ item }">
                 {{ item.dpp | rupiah }}
@@ -130,9 +148,14 @@ import { FileOpener } from '@capacitor-community/file-opener';
             },
             { text: 'Nomor Invoice', value: 'nomor_invoice' },
             { text: 'Tanggal invoice', value: 'tanggal_invoice' },
+            { text: 'Nomor PO', value: 'nomor_po' },
+            { text: 'DP %', value: 'dp_percent' },
+            { text: 'DP Nominal', value: 'dp_nominal' },
+            { text: 'Total Pembelian', value: 'total_pembelian' },
+            { text: 'Fees', value: 'fees' },
             { text: 'Dpp', value: 'dpp' },
             { text: 'Ppn', value: 'ppn' },
-            { text: 'Total', value: 'total' },
+            { text: 'Total', value: 'total_penjualan' },
             ],
             list_rekap : [],
         }
@@ -173,83 +196,50 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 return  date_id;
             },
             export_penjualan(){
-                // this.list_rekap = [];
                 this.loading_rekap = true;
-                this.$axios.post('/export_penjualan',{tgl_awal : this.tgl_awal, tgl_akhir : this.tgl_akhir},{ responseType: 'blob' })
+                const filename = 'rekap_penjualan_' + this.tgl_awal + '_' + this.tgl_akhir + '.xlsx';
+
+                this.$axios.post('/export_penjualan', { tgl_awal: this.tgl_awal, tgl_akhir: this.tgl_akhir }, { responseType: 'blob' })
                 .then(response => {
-                    
-                    
-                    this.loading_rekap= false;
+                    this.loading_rekap = false;
 
                     if (Capacitor.getPlatform() === 'android') {
-                    // Android-specific handling
-                      console.log('Running on Android');
-                      
-                      // Convert Blob to base64
-                      const reader = new FileReader();
-                      reader.readAsDataURL(response.data);
-                      reader.onloadend = async () => {
-                        const base64Data = reader.result.split(',')[1];
-
-                        try {
-                          // Write the file
-                          const pdfFile = await Filesystem.writeFile({
-                            path: 'secrets/rekap_'+this.$moment().format('YYYY-MM-DD')+'.xls',
-                            data: base64Data,
-                            directory: Directory.External,
-                            recursive: true,
-                          });
-
-                          // Open the file
-                          await FileOpener.open({
-                            filePath: pdfFile.uri,
-                            openWithDefault: true,
-                          });
-                          console.log('File opened successfully');
-                        } catch (e) {
-                          console.error(`Unable to open file: ${e.message}`);
-                        }
-                      };
-
-                    } else if (Capacitor.getPlatform() === 'web') {
-                      // Web-specific handling
-                      console.log('Running on a web');
-                      
-                      // Create a Blob object from the response data
-                      const blob = new Blob([response.data], { type: 'application/pdf' });
-                      // Create a temporary URL for the Blob
-                      const url = window.URL.createObjectURL(blob);
-                      // Create a link element and simulate a click to trigger the download
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.setAttribute('download', 'rekap_'+this.$moment().format('YYYY-MM-DD')+'.xls'); // Set the filename
-                      document.body.appendChild(link);
-                      link.click();
-                      // Cleanup
-                      window.URL.revokeObjectURL(url);
-
+                        // Android-specific handling
+                        const reader = new FileReader();
+                        reader.readAsDataURL(response.data);
+                        reader.onloadend = async () => {
+                            const base64Data = reader.result.split(',')[1];
+                            try {
+                                const file = await Filesystem.writeFile({
+                                    path: 'secrets/' + filename,
+                                    data: base64Data,
+                                    directory: Directory.External,
+                                    recursive: true,
+                                });
+                                await FileOpener.open({
+                                    filePath: file.uri,
+                                    openWithDefault: true,
+                                });
+                            } catch (e) {
+                                console.error(`Unable to open file: ${e.message}`);
+                            }
+                        };
+                    } else {
+                        // Web-specific handling
+                        const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', filename);
+                        document.body.appendChild(link);
+                        link.click();
+                        window.URL.revokeObjectURL(url);
                     }
-                    // Create a Blob object from the response data
-                    const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                    // Create a temporary URL for the Blob
-                    const url = window.URL.createObjectURL(blob);
-                    // Create a link element and simulate a click to trigger the download
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', 'rekap_penjualan_'+this.tgl_awal+'_'+this.tgl_akhir); // Set the filename
-                    document.body.appendChild(link);
-                    link.click();
-                    // Cleanup
-                    window.URL.revokeObjectURL(url);
-                    })
-                    .catch(error => {
-                    console.error(error);
-                    this.loading_rekap = false;
                 })
                 .catch(error => {
                     console.log(error);
                     this.loading_rekap = false;
-                })
+                });
             },
         },
         filters : {

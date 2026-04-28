@@ -280,6 +280,39 @@
             <template v-slot:item.total_invoice ="{ item }">
               {{ item.total_invoice | rupiah }}
             </template>
+            <template v-slot:item.dp_percent ="{ item }">
+              {{ item.dp_percent || 0 }} %
+            </template>
+            <template v-slot:item.dp_nominal ="{ item }">
+              <div class="d-flex align-center">
+                {{ (item.dp_nominal || 0) | rupiah }}
+                <v-icon 
+                  small 
+                  class="ml-2" 
+                  color="primary" 
+                  @click="exportToPDF_api(item.id, 'invoice', 'dp')"
+                  v-if="item.dp_nominal > 0"
+                  title="Cetak Kwitansi DP"
+                >
+                  mdi-download
+                </v-icon>
+              </div>
+            </template>
+            <template v-slot:item.sisa_tagihan ="{ item }">
+              <div class="d-flex align-center">
+                {{ (item.sisa_tagihan || 0) | rupiah }}
+                <v-icon 
+                  small 
+                  class="ml-2" 
+                  color="primary" 
+                  @click="exportToPDF_api(item.id, 'invoice', 'pelunasan')"
+                  v-if="item.sisa_tagihan > 0"
+                  title="Cetak Invoice Pelunasan"
+                >
+                  mdi-download
+                </v-icon>
+              </div>
+            </template>
             <template v-slot:item.tanggal_invoice="{ item }">
               {{ item.tanggal_invoice | tanggal_id }}
             </template>
@@ -817,22 +850,28 @@
 
       <div id="tambah_item_invoice"></div>
       <v-card class="logo py-4 mb-10" elevation="5" v-if="show_items_sc_detail">      
-        <v-container>
-          <v-row>
+        <v-form ref="invoiceForm">
+          <v-container>
+            <v-row>
             <!-- Column 1: Supplier -->
             <v-col cols="12" md="6" class="mt-1 py-0 pr-2">
               <v-autocomplete
-              :items = "items_sc"
-              :search-input.sync="search_sc"
-              :loading = "loading_sc"                
-              v-model = "selected_sc"
-              placeholder="supplier"
-              outlined
-              dense
-              clearable        
-              item-text="nomor_sc"
-              item-value="id"
+                v-model="selected_supplier"
+                :items="suppliers"
+                :loading="loading_supplier"
+                placeholder="Cari Supplier..."
+                outlined
+                dense
+                clearable
+                item-text="nama_supplier"
+                item-value="id"
+                return-object
+                :no-filter="true"
+                no-data-text="Supplier tidak ditemukan"
+                @update:search-input="onSearchSupplier"
+                :rules="rules.required"
               ></v-autocomplete>
+              
               <v-text-field          
                 v-model="nomor_po"
                 placeholder="Nomor PO"
@@ -840,7 +879,10 @@
                 outlined
                 class="py-0 mb-3"
                 clearable
+                :rules="rules.required"
               ></v-text-field>
+
+              
 
               <v-checkbox
                 v-model="show_dp_field"
@@ -873,6 +915,7 @@
                       outlined
                       class="py-0"
                       clearable
+                      :rules="rules.required"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="6" class="py-0">
@@ -884,6 +927,7 @@
                       outlined
                       class="py-0"
                       clearable
+                      :rules="rules.required"
                     ></v-text-field>
                   </v-col>
                   <v-col cols="1" class="pb-5 mb-3 pl-0 text-center">
@@ -926,7 +970,18 @@
                 persis
               </template>
               <template v-slot:item.harga_beli="{ item, index }">
-                <input @focus="ClearValue('harga_beli', index)" @change="ConvertRpBeli(index)" style="width: 100px;" type="text" v-model="item.harga_beli_rp"/>
+                <input 
+                  @focus="ClearValue('harga_beli', index)" 
+                  @change="ConvertRpBeli(index)" 
+                  :style="{ 
+                    width: '100px', 
+                    border: (checklist_sc.includes(item.id) && !item.harga_beli) ? '1px solid red' : '1px solid #ccc',
+                    padding: '2px 5px'
+                  }" 
+                  type="text" 
+                  v-model="item.harga_beli_rp"
+                  placeholder="Harga Beli"
+                />
               </template>
               <template v-slot:item.checklist="{ item }">
                 <!-- <v-simple-checkbox
@@ -942,6 +997,7 @@
             </v-btn>
           </div>
         </v-container>
+      </v-form>
       </v-card>
       <!-- <div v-for="item in selected_sc_item">{{ item.id }}</div> -->
        <v-dialog
@@ -1115,6 +1171,24 @@ import { FileOpener } from '@capacitor-community/file-opener';
                       sortable: true,
                       value: 'total_invoice',
                   },
+                  {
+                      text: 'DP %',
+                      align: 'start',
+                      sortable: true,
+                      value: 'dp_percent',
+                  },
+                  {
+                      text: 'DP Nominal',
+                      align: 'start',
+                      sortable: true,
+                      value: 'dp_nominal',
+                  },
+                  {
+                      text: 'Sisa Tagihan',
+                      align: 'start',
+                      sortable: true,
+                      value: 'sisa_tagihan',
+                  },
                   { text: 'Actions', value: 'actions', sortable: false },
                   { text: 'Dokumen invoice', value: 'inv_document', sortable: false },
                   { text: 'Dokumen faktur', value: 'fak_document', sortable: false },
@@ -1148,6 +1222,13 @@ import { FileOpener } from '@capacitor-community/file-opener';
               dp_value: '',
               nomor_po: '',
               fees: [{ name: '', value: '' }],
+              suppliers: [],
+              loading_supplier: false,
+              selected_supplier: null,
+              searchTimeoutSupplier: null,
+              rules: {
+                required: [v => !!v || 'Field ini wajib diisi'],
+              },
           }
         },
         computed : {
@@ -1171,22 +1252,19 @@ import { FileOpener } from '@capacitor-community/file-opener';
           },
          
           form_invoice() {
-            const selectedSc = this.items_sc.find(x => x.id === this.selected_sc) || {};
-            // const supplierName = selectedSc.sales_contract?.customer?.name || selectedSc.customer?.name || selectedSc.nama_supplier || '';
-
             const form = {
               sales_contract_id  : this.selected_sc,
+              supplier_id        : this.selected_supplier ? this.selected_supplier.id : null,
               tanggal_invoice    : this.date_invoice,
               nomor_po           : this.nomor_po,
-              // supplier           : supplierName,
               dp                 : this.dp_value,
+              dp_percent         : this.dp_value,
               fees               : this.fees.filter(fee => fee.name || fee.value),
               harga_beli         : this.items_sc_detail.map(item => ({
                 item_id    : item.id,
                 harga_beli : item.harga_beli || item.harga_beli_rp || ''
               })),
               items              : this.checklist_sc
-              // items : 
             }
 
             return form
@@ -1574,7 +1652,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
             this.dialogExportDate = true;
             this.selected_inv = id;
           },
-          async exportToPDF_api(id,doc) {
+          async exportToPDF_api(id, doc, mode = 'pelunasan') {
             let tipe = '';
             let stamp = true;
             if (doc == 'sj'){
@@ -1613,7 +1691,7 @@ import { FileOpener } from '@capacitor-community/file-opener';
 
             let fetch_invoice = await this.show_invoice(id);
             if(fetch_invoice){
-              this.$axios.post('/download-pdf',{id : id, tipe : tipe, tanggal_sj : this.exportDate, info_mm : this.form_mm, stamp : stamp},{ responseType: 'blob' })
+              this.$axios.post('/download-pdf/'+id,{id : id, tipe : tipe, tanggal_sj : this.exportDate, info_mm : this.form_mm, stamp : stamp, mode: mode},{ responseType: 'blob' })
                   .then(response => {   
                     
                     if (Capacitor.getPlatform() === 'android') {
@@ -1851,8 +1929,30 @@ import { FileOpener } from '@capacitor-community/file-opener';
             });
           },
           simpan_invoice() {
+            // Validasi Form
+            if (!this.$refs.invoiceForm.validate()) {
+              return;
+            }
+
+            // Validasi Harga Beli untuk item yang dicentang
+            const itemsTanpaHarga = this.items_sc_detail.filter(item => 
+              this.checklist_sc.includes(item.id) && (!item.harga_beli || item.harga_beli == 0)
+            );
+            
+            if (itemsTanpaHarga.length > 0) {
+              alert('Harga Beli wajib diisi untuk semua item yang dicentang!');
+              return;
+            }
+            
+            // Minimal 1 fee yang diisi lengkap (Double check)
+            const validFees = this.fees.filter(fee => fee.name && fee.value);
+            if (validFees.length < 1) {
+              alert('Minimal harus ada 1 Fee yang diisi (Nama & Besaran)!');
+              return;
+            }
+
             this.loading_simpan = true;
-           
+            
             this.$axios.post('/invoice', this.form_invoice)
             .then(response => {
               console.log(response.data);
@@ -1886,6 +1986,47 @@ import { FileOpener } from '@capacitor-community/file-opener';
             .catch(error => {
               console.log('gagal')
             })
+          },
+          async search_suppliers(val) {
+            console.log('search_suppliers method called with:', val);
+            if (!val) {
+              this.suppliers = [];
+              return;
+            }
+            this.loading_supplier = true;
+            try {
+              const response = await this.$axios.get('/suppliers', {
+                params: {
+                  nama_supplier: val,
+                  per_page: 20
+                }
+              });
+              console.log('Search Result:', response.data);
+              
+              let data = [];
+              if (response.data.data && Array.isArray(response.data.data.data)) {
+                data = response.data.data.data;
+              } else if (response.data.data && Array.isArray(response.data.data)) {
+                data = response.data.data;
+              } else if (Array.isArray(response.data)) {
+                data = response.data;
+              }
+              
+              this.suppliers = data;
+            } catch (error) {
+              console.error('Error fetching suppliers:', error);
+            } finally {
+              this.loading_supplier = false;
+            }
+          },
+          onSearchSupplier(val) {
+            console.log('onSearchSupplier event triggered:', val);
+            if (!val || (this.selected_supplier && val === this.selected_supplier.nama_supplier)) return;
+            
+            if (this.searchTimeoutSupplier) clearTimeout(this.searchTimeoutSupplier);
+            this.searchTimeoutSupplier = setTimeout(() => {
+              this.search_suppliers(val);
+            }, 300);
           },
           show_invoice(id){    
             return new Promise( resolve => {
@@ -1975,11 +2116,21 @@ import { FileOpener } from '@capacitor-community/file-opener';
               // this.getscs(value);
               value && value !== this.selected_sc.name && value.length % 3 === 0 && this.search_sales_contract();
           },
-          selected_sc(value){
+           selected_sc(value){
               if (value === null){
                 this.selected_sc = '';
               }
             },
+          selected_supplier(val) {
+            if (val) {
+              // When supplier is selected, we could trigger SC search or just fill info
+              this.mm_supplier = val.nama_supplier;
+              this.mm_alamat_supplier = val.alamat_supplier;
+            } else {
+              this.mm_supplier = '';
+              this.mm_alamat_supplier = '';
+            }
+          }
         },
         filters : {
           rupiah(value){
