@@ -184,11 +184,11 @@
 
                 <v-list>
                   <v-list-item                  >
-                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice')">with stamp</v-list-item-title>
+                      <v-list-item-title @click="openDialogExportDate(item.id, 'invoice')">with stamp</v-list-item-title>
                   </v-list-item>
                   <v-divider />
                   <v-list-item>
-                      <v-list-item-title @click="exportToPDF_api(item.id, 'invoice-x')">no stamp</v-list-item-title>
+                      <v-list-item-title @click="openDialogExportDate(item.id, 'invoice-x')">no stamp</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-menu>
@@ -198,7 +198,7 @@
                 class="mr-2"
                 x-small
                 color="info"
-                @click="openDialogExportDate(item.id)"
+                @click="openDialogExportDate(item.id, 'sj')"
               >
                 <v-icon
                 small
@@ -286,31 +286,59 @@
             <template v-slot:item.dp_nominal ="{ item }">
               <div class="d-flex align-center">
                 {{ (item.dp_nominal || 0) | rupiah }}
-                <v-icon 
-                  small 
-                  class="ml-2" 
-                  color="primary" 
-                  @click="exportToPDF_api(item.id, 'invoice', 'dp')"
-                  v-if="item.dp_nominal > 0"
-                  title="Cetak Kwitansi DP"
-                >
-                  mdi-download
-                </v-icon>
+                <v-menu top :offset-x="true" rounded="lg">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-icon 
+                      small 
+                      class="ml-2" 
+                      color="primary" 
+                      v-bind="attrs"
+                      v-on="on"
+                      v-if="item.dp_nominal > 0"
+                      title="Cetak Kwitansi DP"
+                    >
+                      mdi-download
+                    </v-icon>
+                  </template>
+                  <v-list>
+                    <v-list-item @click="openDialogExportDate(item.id, 'invoice', 'dp')">
+                      <v-list-item-title>with stamp</v-list-item-title>
+                    </v-list-item>
+                    <v-divider />
+                    <v-list-item @click="openDialogExportDate(item.id, 'invoice-x', 'dp')">
+                      <v-list-item-title>no stamp</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
               </div>
             </template>
             <template v-slot:item.sisa_tagihan ="{ item }">
               <div class="d-flex align-center">
                 {{ (item.sisa_tagihan || 0) | rupiah }}
-                <v-icon 
-                  small 
-                  class="ml-2" 
-                  color="primary" 
-                  @click="exportToPDF_api(item.id, 'invoice', 'pelunasan')"
-                  v-if="item.sisa_tagihan > 0"
-                  title="Cetak Invoice Pelunasan"
-                >
-                  mdi-download
-                </v-icon>
+                <v-menu top :offset-x="true" rounded="lg">
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-icon 
+                      small 
+                      class="ml-2" 
+                      color="primary" 
+                      v-bind="attrs"
+                      v-on="on"
+                      v-if="item.sisa_tagihan > 0"
+                      title="Cetak Invoice Pelunasan"
+                    >
+                      mdi-download
+                    </v-icon>
+                  </template>
+                  <v-list>
+                    <v-list-item @click="openDialogExportDate(item.id, 'invoice', 'pelunasan')">
+                      <v-list-item-title>with stamp</v-list-item-title>
+                    </v-list-item>
+                    <v-divider />
+                    <v-list-item @click="openDialogExportDate(item.id, 'invoice-x', 'pelunasan')">
+                      <v-list-item-title>no stamp</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
               </div>
             </template>
             <template v-slot:item.tanggal_invoice="{ item }">
@@ -890,16 +918,29 @@
                 dense
                 class="py-0 "
               ></v-checkbox>
-              <v-text-field          
-                v-if="show_dp_field"
-                v-model="dp_value"
-                placeholder="DP %"
-                type="number"
-                dense
-                outlined
-                class="py-0 mb-3"
-                clearable
-              ></v-text-field>
+              <v-row v-if="show_dp_field" no-gutters>
+                <v-col cols="4">
+                  <v-select
+                    v-model="dp_type"
+                    :items="[{text: '%', value: 'percent'}, {text: 'Rp', value: 'nominal'}]"
+                    dense
+                    outlined
+                    label="Tipe DP"
+                    class="py-0 mb-3 mr-1"
+                  ></v-select>
+                </v-col>
+                <v-col cols="8">
+                  <v-text-field          
+                    v-model="dp_value"
+                    :placeholder="dp_type == 'percent' ? 'DP %' : 'DP Nominal'"
+                    type="number"
+                    dense
+                    outlined
+                    class="py-0 mb-3"
+                    clearable
+                  ></v-text-field>
+                </v-col>
+              </v-row>
 
             </v-col>
 
@@ -1018,7 +1059,7 @@
                 <template v-slot:activator="{ on, attrs2 }">
                   <v-text-field            
                     v-model="exportDate"
-                    label="tanggal sj"
+                    label="tanggal"
                     prepend-inner-icon="mdi-calendar"
                     readonly
                     v-bind="attrs2"
@@ -1056,7 +1097,7 @@
               <v-btn color="blue darken-1" text @click="dialogExportDate = false">
                 Batal
               </v-btn>
-              <v-btn color="blue darken-1" text @click="exportToPDF_api(selected_inv, 'sj')">
+              <v-btn color="blue darken-1" text @click="exportToPDF_api(selected_inv, selected_doc_type, selected_download_mode); dialogExportDate = false">
                 OK
               </v-btn>
             </v-card-actions>
@@ -1217,8 +1258,11 @@ import { FileOpener } from '@capacitor-community/file-opener';
               loading_status_invoice : false,
               dialogExportDate: false,
               exportDate: null,
+              selected_doc_type: '',
+              selected_download_mode: '',
               openDatePicker: false,
               show_dp_field: false,
+              dp_type: 'percent',
               dp_value: '',
               nomor_po: '',
               fees: [{ name: '', value: '' }],
@@ -1257,8 +1301,8 @@ import { FileOpener } from '@capacitor-community/file-opener';
               supplier_id        : this.selected_supplier ? this.selected_supplier.id : null,
               tanggal_invoice    : this.date_invoice,
               nomor_po           : this.nomor_po,
-              dp                 : this.dp_value,
-              dp_percent         : this.dp_value,
+              dp_percent         : this.dp_type == 'percent' ? this.dp_value : null,
+              dp_nominal         : this.dp_type == 'nominal' ? this.dp_value : null,
               fees               : this.fees.filter(fee => fee.name || fee.value),
               harga_beli         : this.items_sc_detail.map(item => ({
                 item_id    : item.id,
@@ -1648,9 +1692,12 @@ import { FileOpener } from '@capacitor-community/file-opener';
                 // do something for any other platform
             }
           },
-          openDialogExportDate(id){
+          openDialogExportDate(id, doc, mode = 'pelunasan'){
             this.dialogExportDate = true;
             this.selected_inv = id;
+            this.selected_doc_type = doc;
+            this.selected_download_mode = mode;
+            this.exportDate = this.$moment().format('YYYY-MM-DD');
           },
           async exportToPDF_api(id, doc, mode = 'pelunasan') {
             let tipe = '';
