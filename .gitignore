@@ -91,3 +91,7 @@ sw.*
 *.swp
 
 resources/android/**/*
+
+.continue
+
+.vscode
